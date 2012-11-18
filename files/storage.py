@@ -1,0 +1,274 @@
+# -*- coding: utf-8 -*-
+
+import urlparse
+import hashlib
+import itertools
+from StringIO import StringIO
+from django.conf import settings
+from django.db import connections, transaction
+from django.core.files.storage import Storage, get_storage_class
+from django.dispatch.dispatcher import receiver
+
+from files.models import Attachment
+from files.signals import write_binary, unlink_binary
+from django.template.defaultfilters import slugify
+
+
+def read_buffer(f, chunksize=65536):
+    """
+    Simple file reading buffer. Defaults to
+    64 KB chunk size.
+    """
+    while True:
+        c = f.read(chunksize)
+        if not c:
+            break
+        yield c
+        
+
+def md5buffer(buf, chunksize=65536):
+    """
+    Simple buffer to calculate the md5 hash of
+    a file by reading the file in chunks of the
+    specified size. Defaults to 64 KB.
+    """
+    md5 = hashlib.md5()
+    f = StringIO(buf)
+    while True:
+        c = f.read(chunksize)
+        if not c:
+            break
+        md5.update(c)
+    return md5.hexdigest()
+
+
+class DatabaseStorage(Storage):
+    """
+    This is a storage backend which saves attachments as binary data
+    in a database.
+    
+    The database storage backend expects a table as such:
+    
+        table name:        dbstorage
+        columns:
+            id:            int(4), pk not null
+            fname_blob:    blob, not null
+            fname:         varchar(100), not null index
+            size:          int(8), not null
+            created:       datetime, not null
+            modified:      datetime, not null
+    
+    """
+    def __init__(self, using=None, base_url=None):
+        self.using = using or "default"
+        self.base_url = base_url or getattr(settings, "MEDIA_URL", "")
+    
+    def _open(self, name, mode="rb"):
+        """
+        This method is called by Storage.open(),
+        and should be overridden to provide
+        correct SQL syntax for current databas engine
+        
+        Must return a File() object
+        """
+        pass
+    
+    def _save(self, name, content):
+        """
+        This method is called by Storage.save(),
+        and should be overridden to provide
+        correct syntax for current database engine
+        
+        Must return name
+        """
+        pass
+    
+    def delete(self, name):
+        """
+        This method should be overridden to
+        correctly deal with unlinking and deleting blob objects
+        in current database engine if necessary.
+        """
+        pass
+    
+    #
+    # The following methods should work on
+    # all backends
+    #
+    
+    def listdir(self, path):
+        """
+        This database backend does not support
+        listing directories
+        """
+        raise NotImplementedError("Can't list directories from database backend.")
+    
+    def exists(self, name):
+        return Attachment.objects.using(self.using).filter(attachment__exact=name).exists()
+    
+    def get_available_name(self, name):
+        """
+        Return a filename based on the name parameter that's
+        free and available for new content to be written to
+        on target storage system
+        """
+        # TODO: This is too expensive, and requires a new database lookup
+        # on each iteration. Implement some caching method, or search through
+        # a lazy queryset
+        name = name.replace("\\", "/")
+        count = itertools.count(1)
+
+        while self.exists(name):
+            namelist = name.split("/")
+            dir_name, file_name = "/".join(namelist[:-1]), namelist[-1:][0]
+            file_root, file_ext = file_name.split(".")
+            name = "/".join((dir_name, "%s_%s.%s")) % (file_root, count.next(), file_ext)
+        return name
+    
+    def url(self, name):
+        if self.base_url is None:
+            raise ValueError("This file is not accessible via a URL.")
+        return urlparse.urljoin(self.base_url, name).replace("\\", "/")
+    
+    def size(self, name):
+        row = Attachment.objects.using(self.using).get(attachment__exact=name)
+        return row.size
+        
+    def accessed_time(self, name):
+        raise NotImplementedError("Access time is not tracked in database storage")
+    
+    def created_time(self, name):
+        row = Attachment.objects.using(self.using).get(attachment__exact=name)
+        return row.created
+        
+    def modified_time(self, name):
+        row = Attachment.objects.using(self.using).get(attachment__exact=name)
+        return row.modified
+        
+
+class PostgreSQLStorage(DatabaseStorage):
+    """
+    This is the database storage for PostgreSQL databases
+    """
+    def __init__(self, using=None, base_url=None):
+        super(PostgreSQLStorage, self).__init__(using, base_url)
+        
+        raise NotImplementedError("Support for PostgreSQL databases is not yet implemented.")
+
+
+class MySQLStorage(DatabaseStorage):
+    """
+    This is the database storage for MySQL databases
+    """
+    def __init__(self, using=None, base_url=None):
+        super(MySQLStorage, self).__init__(using, base_url)
+        
+        raise NotImplementedError("Support for MySQL databases is not yet implemented.")
+
+
+class SQLiteStorage(DatabaseStorage):
+    """
+    This is the database storage for SQLite databases
+    """
+    
+    def __init__(self, using=None, base_url=None):
+        super(SQLiteStorage, self).__init__(using, base_url)
+    
+    def _open(self, name, mode="rb"):
+        """
+        Return a File object.
+        """
+        row = Attachment.objects.using(self.using).get(attachment__exact=name)
+        
+        # TODO: make this return a File object
+        return row.blob
+    
+    def _save(self, name, content):
+        """
+        Do nothing.
+        We are calling a special `write_binary` signal
+        in the Attachment save() method, which will call the `_write_binary()`
+        method below, and write the binary file into the Attachment row.
+        """
+        return name
+    
+    def _delete(self, name):
+        """
+        Remove the blob field from the row.
+        """
+        try:
+            row = Attachment.objects.using(self.using).get(attachment__exact=name)
+            row.blob = None
+            row.save()
+        except Attachment.DoesNotExist:
+            # If not the attachment row exists,
+            # do nothing.
+            pass
+        except Exception, e:
+            raise e
+        
+    def _write_binary(self, instance, content):
+        """
+        Do the actual writing of binary data to the table.
+        This method is called after the model has been saved,
+        and can therefore be used to insert data based on
+        information which was not accessible in the save method
+        on the model.
+        """
+        try:
+            import sqlite3
+            cursor = connections[self.using].cursor()
+            if isinstance(content, buffer):
+                # If the file has not changed, return
+                new, orig = md5buffer(content), md5buffer(instance.blob)
+                if new == orig:
+                    return
+                else:
+                    blob = sqlite3.Binary(content)
+            else:
+                blob = sqlite3.Binary(content.file.read())
+            
+            slug = slugify(instance.pre_slug)
+            checksum = md5buffer(blob)
+            cursor.execute("update files_attachment set blob = %s, slug = %s, \
+                            checksum = %s where id = %s",
+                           (blob, slug, checksum, instance.pk))
+            transaction.commit_unless_managed(using=self.using)
+        except Exception, e:
+            raise e
+    
+    def _unlink_binary(self, instance):
+        """
+        Sqlite3 does not requires any special kind of work
+        for unlinking blob fields.
+        """
+        pass
+    
+
+class OracleStorage(DatabaseStorage):
+    """
+    This is the database storage for Oracle databases
+    """
+    def __init__(self, using=None, base_url=None):
+        super(OracleStorage, self).__init__(using, base_url)
+        
+        raise NotImplementedError("Support for Oracle databases is not yet implemented.")
+
+
+#
+# Signals
+# The write_binary signal is called from the Attachment's
+# save() method, and is used to write the file into the blob
+# field.
+
+@receiver(write_binary, sender=Attachment)
+def write_binary_callback(sender, instance, content, **kwargs):
+    storage = get_storage_class()(instance._state.db, instance.attachment.url)
+    storage._write_binary(instance, content)
+
+
+@receiver(unlink_binary, sender=Attachment)
+def unlink_binary_callback(sender, instance, **kwargs):
+    storage = get_storage_class()(instance._state.db, instance.attachment.url)
+    if hasattr(storage, "_unlink_binary"):
+        storage._unlink_binary(instance)

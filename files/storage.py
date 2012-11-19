@@ -1,45 +1,18 @@
 # -*- coding: utf-8 -*-
 
 import urlparse
-import hashlib
 import itertools
 from StringIO import StringIO
 from django.conf import settings
 from django.db import connections, transaction
 from django.core.files.storage import Storage, get_storage_class
+from django.core.files.base import File
 from django.dispatch.dispatcher import receiver
 
+from files.utils import md5buffer
 from files.models import Attachment
 from files.signals import write_binary, unlink_binary
 from django.template.defaultfilters import slugify
-
-
-def read_buffer(f, chunksize=65536):
-    """
-    Simple file reading buffer. Defaults to
-    64 KB chunk size.
-    """
-    while True:
-        c = f.read(chunksize)
-        if not c:
-            break
-        yield c
-        
-
-def md5buffer(buf, chunksize=65536):
-    """
-    Simple buffer to calculate the md5 hash of
-    a file by reading the file in chunks of the
-    specified size. Defaults to 64 KB.
-    """
-    md5 = hashlib.md5()
-    f = StringIO(buf)
-    while True:
-        c = f.read(chunksize)
-        if not c:
-            break
-        md5.update(c)
-    return md5.hexdigest()
 
 
 class DatabaseStorage(Storage):
@@ -154,6 +127,12 @@ class PostgreSQLStorage(DatabaseStorage):
         super(PostgreSQLStorage, self).__init__(using, base_url)
         
         raise NotImplementedError("Support for PostgreSQL databases is not yet implemented.")
+    
+    def _unlink_binary(self, instance):
+        """
+        Unlink the binary data before deleting
+        """
+        pass
 
 
 class MySQLStorage(DatabaseStorage):
@@ -170,18 +149,18 @@ class SQLiteStorage(DatabaseStorage):
     """
     This is the database storage for SQLite databases
     """
-    
     def __init__(self, using=None, base_url=None):
         super(SQLiteStorage, self).__init__(using, base_url)
-    
+        
     def _open(self, name, mode="rb"):
         """
         Return a File object.
         """
         row = Attachment.objects.using(self.using).get(attachment__exact=name)
-        
-        # TODO: make this return a File object
-        return row.blob
+        f = File(StringIO(row.blob), row.filename)
+        f.size = row.size
+        f.mode = mode
+        return f
     
     def _save(self, name, content):
         """
@@ -215,34 +194,26 @@ class SQLiteStorage(DatabaseStorage):
         information which was not accessible in the save method
         on the model.
         """
-        try:
-            import sqlite3
-            cursor = connections[self.using].cursor()
-            if isinstance(content, buffer):
-                # If the file has not changed, return
-                new, orig = md5buffer(content), md5buffer(instance.blob)
-                if new == orig:
-                    return
-                else:
-                    blob = sqlite3.Binary(content)
+        import sqlite3
+        cursor = connections[self.using].cursor()
+        if isinstance(content, buffer):
+            # If the content is a buffer object, this is an already
+            # existing attachment. Check if the content has changed.
+            cursor.execute("select checksum from files_attachment where id = %s", (instance.pk, ))
+            new, orig = md5buffer(content), cursor.fetchone()[0]
+            if new == orig:
+                return
             else:
-                blob = sqlite3.Binary(content.file.read())
-            
-            slug = slugify(instance.pre_slug)
-            checksum = md5buffer(blob)
-            cursor.execute("update files_attachment set blob = %s, slug = %s, \
-                            checksum = %s where id = %s",
-                           (blob, slug, checksum, instance.pk))
-            transaction.commit_unless_managed(using=self.using)
-        except Exception, e:
-            raise e
-    
-    def _unlink_binary(self, instance):
-        """
-        Sqlite3 does not requires any special kind of work
-        for unlinking blob fields.
-        """
-        pass
+                blob = sqlite3.Binary(content)
+        else:
+            blob = sqlite3.Binary(content.file.read())
+        
+        slug = slugify(instance.pre_slug)
+        checksum = md5buffer(blob)
+        cursor.execute("update files_attachment set blob = %s, slug = %s, \
+                        checksum = %s where id = %s",
+                       (blob, slug, checksum, instance.pk))
+        transaction.commit_unless_managed(using=self.using)
     
 
 class OracleStorage(DatabaseStorage):

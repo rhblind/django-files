@@ -207,14 +207,14 @@ class SQLiteStorage(DatabaseStorage):
                 blob = sqlite3.Binary(content)
         else:
             blob = sqlite3.Binary(content.file.read())
-        
+
         slug = slugify(instance.pre_slug)
         checksum = md5buffer(blob)
         cursor.execute("update files_attachment set blob = %s, slug = %s, \
                         checksum = %s where id = %s",
                        (blob, slug, checksum, instance.pk))
         transaction.commit_unless_managed(using=self.using)
-    
+
 
 class OracleStorage(DatabaseStorage):
     """

@@ -13,6 +13,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 from django.core.files.storage import get_storage_class
 
+from files.utils import md5buffer
 from files.signals import write_binary, unlink_binary
 
 
@@ -31,25 +32,16 @@ class BlobField(models.Field):
     """
     Represents a Binary Large OBject field in the database.
     """
-    
+
     description = _("Binary large object (blob) field")
-    
-    def get_prep_value(self, value):
-        return super(BlobField, self).get_prep_value(value)
-    
-    def get_prep_lookup(self, lookup_type, value):
-        return super(BlobField, self).get_prep_lookup(lookup_type, value)
     
     def get_internal_type(self):
         return "BlobField"
-    
-    def to_python(self, value):
-        super(BlobField, self).to_python(value)
-    
+
     def db_type(self, connection):
         """
-        Figure out what backend we're running on,
-        and return correct blob field for this backend.
+        Figure out what storage backend we're running on,
+        and return correct field type for this backend.
         """
         vendor_blob_name = {
             "sqlite": "blob",
@@ -148,7 +140,7 @@ class Attachment(BaseAttachmentAbstractModel):
             # save the instance and emit the `write_binary` signal
             # to write the binary data into the blob field.
             try:
-                inmem_file = self.attachment.file
+                inmem_file = self.attachment.file or self.blob
                 super(Attachment, self).save(*args, **kwargs)
                 write_binary.send(sender=Attachment, instance=self, content=inmem_file)
             except Exception:
@@ -167,9 +159,8 @@ class Attachment(BaseAttachmentAbstractModel):
     @property
     def pre_slug(self):
         """
-        Create a nice "semi unique" slug.
-        This is not the real slug, only a helper method to
-        create the string which is slugified.
+        Create a nice "semi unique" slug. This is not the real slug,
+        only a helper method to create the string which is slugified.
         """
         s = "-".join(map(str, (self.content_type, self.pk, os.path.basename(self.attachment.name))))
         return re.sub("[^\w+]", "-", s)
@@ -177,6 +168,14 @@ class Attachment(BaseAttachmentAbstractModel):
     @property
     def filename(self):
         return os.path.basename(self.attachment.name)
+    
+    @property
+    def checksum_match(self):
+        """
+        If this is False, something fishy is going on.
+        """
+        cksum = md5buffer(self.blob)
+        return cksum == self.checksum
 
 
 #

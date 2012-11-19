@@ -3,7 +3,6 @@
 {% block content %}
     {{ attachment }}
     <p>
-        {{ attachment.attachment }}
+        <a href="{% url download-attachment attachment.slug %}">download</>
     </p>
-    
 {% endblock %}

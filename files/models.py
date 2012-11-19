@@ -11,6 +11,7 @@ from django.contrib.contenttypes import generic
 from django.contrib.sites.models import Site
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
+from django.template.defaultfilters import slugify
 from django.core.files.storage import get_storage_class
 
 from files.utils import md5buffer
@@ -26,6 +27,10 @@ def get_upload_to(instance, filename):
     app_model = u"_".join((instance.content_object._meta.app_label,
                           instance.content_object._meta.object_name)).lower()
     return u"/".join(map(str, (prefix, app_model, instance.content_object.pk, filename)))
+
+
+class UnsupportedBackend(Exception):
+    pass
 
 
 class BlobField(models.Field):
@@ -68,8 +73,7 @@ class BaseAttachmentAbstractModel(models.Model):
     """
     
     # Content object fields
-    content_type = models.ForeignKey(ContentType,
-                    verbose_name=_("content type"),
+    content_type = models.ForeignKey(ContentType, verbose_name=_("content type"),
                     related_name="content_type_set_for_%(class)s")
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey("content_type", "object_id")
@@ -140,13 +144,21 @@ class Attachment(BaseAttachmentAbstractModel):
             # save the instance and emit the `write_binary` signal
             # to write the binary data into the blob field.
             try:
-                inmem_file = self.attachment.file or self.blob
+                content = self.attachment.file or self.blob
                 super(Attachment, self).save(*args, **kwargs)
-                write_binary.send(sender=Attachment, instance=self, content=inmem_file)
+                write_binary.send(sender=Attachment, instance=self, content=content)
             except Exception:
                 raise
+        elif self.backend == "FileSystemStorage":
+            # If using the default FileSystemStorage,
+            # save some extra attributes as well.
+            if not self.pk:
+                super(Attachment, self).save(*args, **kwargs)
+            self.slug = slugify(self.pre_slug)
+            self.checksum = md5buffer(self.attachment.file.read())
+            super(Attachment, self).save(force_update=True)
         else:
-            super(Attachment, self).save(*args, **kwargs)
+            raise UnsupportedBackend("Unsupported storage backend.")
     
     def delete(self, using=None):
         """
@@ -162,7 +174,8 @@ class Attachment(BaseAttachmentAbstractModel):
         Create a nice "semi unique" slug. This is not the real slug,
         only a helper method to create the string which is slugified.
         """
-        s = "-".join(map(str, (self.content_type, self.pk, os.path.basename(self.attachment.name))))
+        s = "-".join(map(str, (self.content_type, self.pk,
+                               os.path.basename(self.attachment.name))))
         return re.sub("[^\w+]", "-", s)
     
     @property
@@ -174,8 +187,10 @@ class Attachment(BaseAttachmentAbstractModel):
         """
         If this is False, something fishy is going on.
         """
-        cksum = md5buffer(self.blob)
-        return cksum == self.checksum
+        if self.backend == "FileSystemStorage":
+            return md5buffer(self.attachment.file.read()) == self.checksum
+        else:
+            return md5buffer(self.blob) == self.checksum
 
 
 #

@@ -6,8 +6,7 @@
 {% load attachments %}
 
 {% for shape in shapes %}
-    {% get_attachment_count for shape as cnt %}
-    {{ shape }} - {{ cnt }}
+    {% render_attachment_list for shape %}
     
 {% endfor %}
 

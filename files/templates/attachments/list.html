@@ -1,7 +1,7 @@
 {% load attachments %}
 <dl id="attachments">
     {% for attachment in attachment_list %}
-        <dt id="c{{ attachment.pk }}">
+        <dt id="attachment-{{ attachment.pk }}">
             {{ attachment.created }} - {{ attachment.filename }} - {{ attachment.mimetype }}
         </dt>
         <dd><p>{{ attachment }}</p></dd>

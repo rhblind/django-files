@@ -16,4 +16,3 @@ class ShapeAdmin(admin.ModelAdmin):
         
     
 admin.site.register(Shape, ShapeAdmin)
-#admin.site.register(Shape)

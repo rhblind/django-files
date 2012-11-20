@@ -1,6 +1,16 @@
 {% extends "attachments/base.html" %}
+{% load i18n %}
 
+{% block title %}{% trans "View your attachment "%}{% endblock %}
 
 {% block content %}
-   
+    {% load attachments %}
+    <div>
+        <h1>{% trans "Detailed information about " %}{{ attachment.filename }}</h1>
+        <fieldset>
+            <p>
+                {{ attachment.filename }}
+            </p>
+        </fieldset>
+    </div>
 {% endblock %}

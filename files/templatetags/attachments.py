@@ -349,6 +349,32 @@ def attachment_form_target():
 
 
 @register.simple_tag
+def get_attachment_view(attachment):
+    """
+    Get the view URL for an attachment.
+
+    Example::
+        
+        <a href="{% get_attachment_view attachment %}">view</a>
+    """
+
+    return files.get_view_url(attachment)
+
+
+@register.simple_tag
+def get_edit_download(attachment):
+    """
+    Get the edit URL for an attachment.
+
+    Example::
+        
+        <a href="{% get_attachment_edit attachment %}">edit</a>
+    """
+
+    return files.get_edit_url(attachment)
+
+
+@register.simple_tag
 def get_attachment_download(attachment):
     """
     Get the download URL for an attachment.

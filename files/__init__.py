@@ -80,14 +80,14 @@ def get_form_target():
         return urlresolvers.reverse("add-attachment")
 
 
-def get_delete_url(attachment):
+def get_view_url(attachment):
     """
-    Get the URL for the "delete this attachment" view
+    Get the URL for the "view this attachment" view
     """
-    if get_storage_backend_name() not in CONTRIB_BACKENDS and hasattr(get_storage_backend(), "get_delete_url"):
-        return get_storage_backend().get_delete_url(attachment)
+    if get_storage_backend_name() not in CONTRIB_BACKENDS and hasattr(get_storage_backend(), "get_view_url"):
+        return get_storage_backend().get_view_url(attachment)
     else:
-        return urlresolvers.reverse("delete-attachment", kwargs={"slug": attachment.slug})
+        return urlresolvers.reverse("view-attachment", kwargs={"slug": attachment.slug})
 
 
 def get_edit_url(attachment):
@@ -98,6 +98,16 @@ def get_edit_url(attachment):
         return get_storage_backend().get_edit_url(attachment)
     else:
         return urlresolvers.reverse("edit-attachment", kwargs={"slug": attachment.slug})
+
+
+def get_delete_url(attachment):
+    """
+    Get the URL for the "delete this attachment" view
+    """
+    if get_storage_backend_name() not in CONTRIB_BACKENDS and hasattr(get_storage_backend(), "get_delete_url"):
+        return get_storage_backend().get_delete_url(attachment)
+    else:
+        return urlresolvers.reverse("delete-attachment", kwargs={"slug": attachment.slug})
 
 
 def get_download_url(attachment):

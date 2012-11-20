@@ -4,7 +4,14 @@
         <dt id="attachment-{{ attachment.pk }}">
             {{ attachment.created }} - {{ attachment.filename }} - {{ attachment.mimetype }}
         </dt>
-        <dd><p>{{ attachment }}</p></dd>
-        <dd><a href="{% get_attachment_download attachment %}">download</a></dd>
+        <dd><p>{{ attachment }}
+            <ul class="attachment-actions">
+                <li><a href="{% get_attachment_view attachment %}">view</a></li>
+                <li><a href="{% get_attachment_view attachment %}">edit</a></li>
+                <li><a href="{% get_attachment_view attachment %}">delete</a></li>
+                <li><a href="{% get_attachment_download attachment %}">download</a></li>
+            </ul>
+            </p>
+        </dd>
     {% endfor %}
 </dl>

@@ -15,10 +15,9 @@ class AttachmentDetailView(DetailView):
     """
     Returns the details of an attachment.
     """
-    
     model = Attachment
     context_object_name = "attachment"
-    template_name = "attachments/detail.html"
+    template_name = "attachments/view.html"
 
 
 class AttachmentEditView(UpdateView):
@@ -33,7 +32,6 @@ class AttachmentDownloadView(BaseDetailView, SingleObjectMixin):
     """
     Returns the attachment file as a HttpResponse.
     """
-    
     model = Attachment
     
     def render_to_response(self, context):

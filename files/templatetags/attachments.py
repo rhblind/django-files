@@ -346,3 +346,16 @@ def attachment_form_target():
         <form action="{% attachment_form_target %}" method="post">
     """
     return files.get_form_target()
+
+
+@register.simple_tag
+def get_attachment_download(attachment):
+    """
+    Get the download URL for an attachment.
+
+    Example::
+        
+        <a href="{% get_attachment_download attachment %}">download</a>
+    """
+
+    return files.get_download_url(attachment)

@@ -6,33 +6,10 @@
         <!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame
         Remove this if you use the .htaccess -->
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-
-        <title>django-dfiles demosite</title>
+        <title>{% block title %}{% endblock %}</title>
     </head>
 
     <body>
-        <div>
-            <header>
-                <h1>base</h1>
-            </header>
-            <nav>
-                <p>
-                    <a href="/">Home</a>
-                </p>
-                <p>
-                    <a href="/contact">Contact</a>
-                </p>
-            </nav>
-
-            <div>
-
-            </div>
-
-            <footer>
-                <p>
-                    Demosite rocks!
-                </p>
-            </footer>
-        </div>
+        {% block content %}{% endblock %}
     </body>
 </html>

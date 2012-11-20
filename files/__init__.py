@@ -98,3 +98,13 @@ def get_edit_url(attachment):
         return get_storage_backend().get_edit_url(attachment)
     else:
         return urlresolvers.reverse("edit-attachment", kwargs={"slug": attachment.slug})
+
+
+def get_download_url(attachment):
+    """
+    Get the download URL for this attachment
+    """
+    if get_storage_backend_name() not in CONTRIB_BACKENDS and hasattr(get_storage_backend(), "get_download_url"):
+        return get_storage_backend().get_download_url(attachment)
+    else:
+        return urlresolvers.reverse("download-attachment", kwargs={"slug": attachment.slug})

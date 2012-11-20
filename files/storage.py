@@ -229,45 +229,6 @@ class OracleStorage(DatabaseStorage):
 
 
 #
-# These methods are used by the template tags
-#
-
-def get_model():
-    """
-    Returns the model for this storage backend.
-    """
-    return Attachment
-
-
-def get_form():
-    """
-    Returns the model form for this backend.
-    """
-    return AttachmentForm
-
-
-def get_form_target():
-    """
-    Returns the URL for the add attachment view
-    """
-    return urlresolvers.reverse("add-attachment")
-
-
-def get_delete_url(attachment):
-    """
-    Returns the URL for the delete attachment view
-    """
-    return urlresolvers.reverse("delete-attachment", kwargs={"slug": attachment.slug})
-
-
-def get_edit_url(attachment):
-    """
-    Returns the URL for the edit attachment view
-    """
-    return urlresolvers.reverse("edit-attachment", kwargs={"slug": attachment.slug})
-
-
-#
 # Signals
 # The write_binary signal is called from the Attachment's
 # save() method, and is used to write the file into the blob

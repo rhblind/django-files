@@ -1,10 +1,6 @@
 {% extends "attachments/base.html" %}
 
-{% load attachments %}
 
 {% block content %}
-    {{ attachment }}
-    <p>
-        <a href="{% url download-attachment attachment.slug %}">download</>
-    </p>
+   
 {% endblock %}

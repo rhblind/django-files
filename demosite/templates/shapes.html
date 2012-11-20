@@ -1,0 +1,14 @@
+{% extends "base.html"%}
+
+{% block content %}
+<h1>Demosite</h1>
+
+{% load attachments %}
+
+{% for shape in shapes %}
+    {% get_attachment_count for shape as cnt %}
+    {{ shape }} - {{ cnt }}
+    
+{% endfor %}
+
+{% endblock %}

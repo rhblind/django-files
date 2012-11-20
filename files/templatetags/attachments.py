@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This is an implementation of the django.contrib.comments
-# framework template tags adapted for the Attachment model
+# framework template tags adapted to use with attachments.
 #
 
 from __future__ import absolute_import
@@ -64,7 +64,7 @@ class BaseAttachmentNode(template.Node):
         if ctype is None and object_expr is None:
             raise template.TemplateSyntaxError("Attachment nodes must be given either a literal object or a ctype and object pk.")
         
-        self.attachment_model = attachment.get_model()
+        self.attachment_model = files.get_model()
         self.as_varname = as_varname
         self.ctype = ctype
         self.object_pk_expr = object_pk_expr
@@ -72,7 +72,7 @@ class BaseAttachmentNode(template.Node):
         self.attachment = attachment
         
     def render(self, context):
-        qs = self.get_querys_set(context)
+        qs = self.get_query_set(context)
         context[self.as_varname] = self.get_context_value_from_queryset(context, qs)
         return ""
     

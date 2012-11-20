@@ -1,0 +1,4 @@
+class AttachmentForm(object):
+    pass
+
+

@@ -1,8 +1,10 @@
 # Create your views here.
 
-from django.views.generic import DetailView
-from django.http import HttpResponse
+from django.views.generic.list import ListView
+from demosite.models import Shape
 
 
-def home(request):
-    return HttpResponse("Home")
+class ShapeListView(ListView):
+    model = Shape
+    context_object_name = "shapes"
+    template_name = "shapes.html"

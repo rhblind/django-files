@@ -13,6 +13,10 @@ a {
   text-decoration: none;
 }
 
+.container_12 a {
+    color: #123;
+}
+
 a:hover {
   text-decoration: underline;
 }
@@ -44,12 +48,20 @@ p {
 
 ul {
     list-style-type: none;
-    padding: 0px;
+    padding: 0 0 0 20px;
     margin: 0px;
 }
 
 ul li {
-    padding-left: 10px;
+    list-style: square;
+    padding-left: 2px;
+    margin-bottom: 2px;
+}
+
+label {
+  font-size: 14px;
+  color: #4d4d4d;
+  display: block;
 }
 
 .note {
@@ -63,6 +75,6 @@ ul li {
 }
 
 .note a {
-    color: #000;
+    color: #123;
     text-decoration: underline; 
 }

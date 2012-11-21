@@ -7,4 +7,4 @@ from demosite.models import Shape
 class ShapeListView(ListView):
     model = Shape
     context_object_name = "shapes"
-    template_name = "shapes.html"
+    template_name = "home.html"

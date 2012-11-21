@@ -19,20 +19,7 @@ from files.signals import write_binary, unlink_binary
 
 class DatabaseStorage(Storage):
     """
-    This is a storage backend which saves attachments as binary data
-    in a database.
-    
-    The database storage backend expects a table as such:
-    
-        table name:        dbstorage
-        columns:
-            id:            int(4), pk not null
-            fname_blob:    blob, not null
-            fname:         varchar(100), not null index
-            size:          int(8), not null
-            created:       datetime, not null
-            modified:      datetime, not null
-    
+    Database storage backend base.
     """
     def __init__(self, using=None, base_url=None):
         self.using = using or "default"

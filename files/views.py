@@ -39,6 +39,3 @@ class AttachmentDownloadView(BaseDetailView, SingleObjectMixin):
         response = HttpResponse(obj.attachment.file.read(), mimetype=obj.mimetype)
         response["Content-Disposition"] = "inline; filename=%s" % obj.filename
         return response
-    
-
-

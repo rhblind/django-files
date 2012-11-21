@@ -155,7 +155,7 @@ class Attachment(BaseAttachmentAbstractModel):
             if not self.pk:
                 super(Attachment, self).save(*args, **kwargs)
             self.slug = slugify(self.pre_slug)
-            self.checksum = md5buffer(self.attachment.file.read())
+            self.checksum = md5buffer(self.attachment.file)
             super(Attachment, self).save(force_update=True)
         else:
             raise UnsupportedBackend("Unsupported storage backend.")
@@ -187,10 +187,7 @@ class Attachment(BaseAttachmentAbstractModel):
         """
         If this is False, something fishy is going on.
         """
-        if self.backend == "FileSystemStorage":
-            return md5buffer(self.attachment.file.read()) == self.checksum
-        else:
-            return md5buffer(self.blob) == self.checksum
+        return md5buffer(self.attachment.file) == self.checksum
 
 
 #
@@ -201,3 +198,9 @@ class Attachment(BaseAttachmentAbstractModel):
 @receiver(signals.pre_save, sender=Attachment)
 def clean_attachment_callback(sender, instance, **kwargs):
     instance.clean()
+
+
+@receiver(signals.post_save, sender=Attachment)
+def post_save_attachment_callback(sender, instance, created, **kwargs):
+    if created:
+        instance._created = True

@@ -5,7 +5,7 @@ import urlparse
 import itertools
 from StringIO import StringIO
 from django.conf import settings
-from django.db import connections, transaction
+from django.db import connections, transaction, IntegrityError
 from django.core.files.storage import Storage, get_storage_class
 from django.core.files.base import File
 from django.dispatch.dispatcher import receiver
@@ -142,19 +142,20 @@ class PostgreSQLStorage(DatabaseStorage):
         """
         PostgreSQL requires a little work..
         """
-        try:
-            cursor = connections[self.using].cursor()
-            attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
-            
-        except Exception, e:
-            raise e
+        attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
+        cursor = connections[self.using].cursor()
+        lobject = cursor.db.connection.lobject(attachment.blob, "r")
+        fname = File(StringIO(lobject.read()), attachment.filename)
+        lobject.close()
         
+        # Make sure the checksum match before returning the file
+        if not md5buffer(fname) == attachment.checksum:
+            raise IntegrityError("Checksum mismatch")
         
+        fname.size = attachment.size
+        fname.mode = mode
         
-        f = File(StringIO(attachment.blob), attachment.filename)
-        f.size = attachment.size
-        f.mode = mode
-        return f
+        return fname
     
     def _save(self, name, content):
         """
@@ -169,16 +170,17 @@ class PostgreSQLStorage(DatabaseStorage):
         """
         Remove the blob field from the row.
         """
-        try:
-            attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
-            attachment.blob = None
-            attachment.save()
-        except Attachment.DoesNotExist:
-            # If not the attachment row exists,
-            # do nothing.
-            pass
-        except Exception, e:
-            raise e
+        pass
+#        try:
+#            attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
+#            attachment.blob = None
+#            attachment.save()
+#        except Attachment.DoesNotExist:
+#            # If not the attachment row exists,
+#            # do nothing.
+#            pass
+#        except Exception, e:
+#            raise e
     
     def _write_binary(self, instance, content):
         """
@@ -188,28 +190,33 @@ class PostgreSQLStorage(DatabaseStorage):
         information which was not accessible in the save method
         on the model.
         """
-        pass
-#        import sqlite3
-#        cursor = connections[self.using].cursor()
-#        if isinstance(content, buffer):
-#            # If the content is a buffer object, this is an already
-#            # existing attachment. Check if the content has changed.
-#            cursor.execute("select checksum from files_attachment where id = %s", (instance.pk, ))
-#            new, orig = md5buffer(content), cursor.fetchone()[0]
-#            if new == orig:
-#                return
-#            else:
-#                blob = sqlite3.Binary(content)
-#        else:
-#            blob = sqlite3.Binary(content.file.read())
-#
-#        slug = slugify(instance.pre_slug)
-#        checksum = md5buffer(blob)
-#        cursor.execute("update files_attachment set blob = %s, slug = %s, \
-#                        checksum = %s where id = %s",
-#                       (blob, slug, checksum, instance.pk))
-#        transaction.commit_unless_managed(using=self.using)
-    
+        cursor = connections[self.using].cursor()
+        if not (hasattr(instance, "_created") and instance._created is True):
+            cursor.execute("select checksum from files_attachment where id = %s", (instance.pk, ))
+            new, orig = md5buffer(content), cursor.fetchone()[0]
+            if new == orig:
+                return
+
+        # If still here, either the file is a new upload,
+        # or it has changed. In either case, write the
+        # file to the database
+        content.seek(0)
+        blob_data = content.read()
+        slug = slugify(instance.pre_slug)
+        checksum = md5buffer(content)
+        
+        try:
+            sid = transaction.savepoint(self.using)
+            lobj = cursor.db.connection.lobject(0, "n", 0, None)
+            lobj.write(blob_data)
+            cursor.execute("update files_attachment set blob = %s, slug = %s, \
+                            checksum = %s where id = %s", (lobj.oid, slug, checksum, instance.pk))
+            lobj.close()
+            transaction.savepoint_commit(sid, using=self.using)
+        except IntegrityError, e:
+            transaction.savepoint_rollback(sid, using=self.using)
+            raise e
+
     def _unlink_binary(self, instance):
         """
         Unlink the binary data before deleting
@@ -248,10 +255,15 @@ class SQLiteStorage(DatabaseStorage):
         Return a File object.
         """
         attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
-        f = File(StringIO(attachment.blob), attachment.filename)
-        f.size = attachment.size
-        f.mode = mode
-        return f
+        fname = File(StringIO(attachment.blob), attachment.filename)
+        
+        # Make sure the checksum match before returning the file
+        if not md5buffer(fname) == attachment.checksum:
+            raise IntegrityError("Checksum mismatch")
+        
+        fname.size = attachment.size
+        fname.mode = mode
+        return fname
     
     def _save(self, name, content):
         """
@@ -286,24 +298,24 @@ class SQLiteStorage(DatabaseStorage):
         on the model.
         """
         import sqlite3
+
         cursor = connections[self.using].cursor()
-        if isinstance(content, buffer):
-            # If the content is a buffer object, this is an already
-            # existing attachment. Check if the content has changed.
+        if not (hasattr(instance, "_created") and instance._created is True):
             cursor.execute("select checksum from files_attachment where id = %s", (instance.pk, ))
             new, orig = md5buffer(content), cursor.fetchone()[0]
             if new == orig:
                 return
-            else:
-                blob = sqlite3.Binary(content)
-        else:
-            blob = sqlite3.Binary(content.file.read())
-
+        
+        # If still here, either the file is a new upload,
+        # or it has changed. In either case, write the
+        # file to the database
+        content.seek(0)
+        blob_data = sqlite3.Binary(content.read())
         slug = slugify(instance.pre_slug)
-        checksum = md5buffer(blob)
+        checksum = md5buffer(content)
+        
         cursor.execute("update files_attachment set blob = %s, slug = %s, \
-                        checksum = %s where id = %s",
-                       (blob, slug, checksum, instance.pk))
+                        checksum = %s where id = %s", (blob_data, slug, checksum, instance.pk))
         transaction.commit_unless_managed(using=self.using)
 
 

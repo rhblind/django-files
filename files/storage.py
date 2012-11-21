@@ -6,15 +6,15 @@ import itertools
 from StringIO import StringIO
 from django.conf import settings
 from django.db import connections, transaction, IntegrityError
-from django.core.files.storage import Storage, get_storage_class
+from django.core import urlresolvers
 from django.core.files.base import File
+from django.core.files.storage import Storage, get_storage_class
 from django.dispatch.dispatcher import receiver
 from django.template.defaultfilters import slugify
 
 from files.utils import md5buffer
 from files.models import Attachment
 from files.signals import write_binary, unlink_binary
-from django.core import urlresolvers
 
 
 class DatabaseStorage(Storage):
@@ -70,10 +70,8 @@ class DatabaseStorage(Storage):
         """
         pass
     
-    #
     # The following methods should work on
     # all backends
-    #
     
     def listdir(self, path):
         """
@@ -307,7 +305,6 @@ class SQLiteStorage(DatabaseStorage):
         on the model.
         """
         import sqlite3
-
         cursor = connections[self.using].cursor()
         if not (hasattr(instance, "_created") and instance._created is True):
             cursor.execute("select checksum from files_attachment where id = %s", (instance.pk, ))
@@ -317,12 +314,11 @@ class SQLiteStorage(DatabaseStorage):
         
         # If still here, either the file is a new upload,
         # or it has changed. In either case, write the
-        # file to the database
+        # file to the database.
         content.seek(0)
         blob_data = sqlite3.Binary(content.read())
         slug = slugify(instance.pre_slug)
         checksum = md5buffer(content)
-        
         cursor.execute("update files_attachment set blob = %s, slug = %s, \
                         checksum = %s where id = %s", (blob_data, slug, checksum, instance.pk))
         transaction.commit_unless_managed(using=self.using)
@@ -338,12 +334,12 @@ class OracleStorage(DatabaseStorage):
         raise NotImplementedError("Support for Oracle databases is not yet implemented.")
 
 
-#
 # Signals
 # The write_binary signal is called from the Attachment's
 # save() method, and is used to write the file into the blob
 # field.
-#
+# The unlink_binary signal is called on Attachment pre_delete
+# to handle unlinking of the blob field if required.
 
 @receiver(write_binary, sender=Attachment)
 def write_binary_callback(sender, instance, content, **kwargs):

@@ -160,14 +160,6 @@ class Attachment(BaseAttachmentAbstractModel):
         else:
             raise UnsupportedBackend("Unsupported storage backend.")
     
-    def delete(self, using=None):
-        """
-        Emit the `unlink_binary` signal to perform extra
-        work before removing if required by backend.
-        """
-        unlink_binary.send(sender=Attachment, instance=self)
-        super(Attachment, self).delete(using=using)
-    
     @property
     def pre_slug(self):
         """
@@ -191,16 +183,32 @@ class Attachment(BaseAttachmentAbstractModel):
 
 
 #
-# Call the clean() method on pre_save
-# to set some attributes based on the uploaded
-# file.
+# Signals
+#
 
 @receiver(signals.pre_save, sender=Attachment)
-def clean_attachment_callback(sender, instance, **kwargs):
+def pre_save_callback(sender, instance, **kwargs):
+    """
+    Run clean before each save to set some values
+    based on the uploaded attachment.
+    """
     instance.clean()
 
 
 @receiver(signals.post_save, sender=Attachment)
 def post_save_attachment_callback(sender, instance, created, **kwargs):
+    """
+    Flag the model with a _created flag to indicate
+    that this is a new attachment.
+    """
     if created:
         instance._created = True
+
+
+@receiver(signals.pre_delete, sender=Attachment)
+def post_delete_callback(sender, instance, **kwargs):
+    """
+    Emit the `unlink_binary` signal to perform extra
+    work before removing if required by backend.
+    """
+    unlink_binary.send(sender=Attachment, instance=instance)

@@ -140,7 +140,8 @@ class PostgreSQLStorage(DatabaseStorage):
     
     def _open(self, name, mode="rb"):
         """
-        PostgreSQL requires a little work..
+        Read the file from the database, and return
+        as a File instance.
         """
         attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
         cursor = connections[self.using].cursor()
@@ -170,17 +171,16 @@ class PostgreSQLStorage(DatabaseStorage):
         """
         Remove the blob field from the row.
         """
-        pass
-#        try:
-#            attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
-#            attachment.blob = None
-#            attachment.save()
-#        except Attachment.DoesNotExist:
-#            # If not the attachment row exists,
-#            # do nothing.
-#            pass
-#        except Exception, e:
-#            raise e
+        try:
+            attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
+            attachment.blob = None
+            attachment.save()
+        except Attachment.DoesNotExist:
+            # If not the attachment row exists,
+            # do nothing.
+            pass
+        except Exception, e:
+            raise e
     
     def _write_binary(self, instance, content):
         """
@@ -207,11 +207,11 @@ class PostgreSQLStorage(DatabaseStorage):
         
         try:
             sid = transaction.savepoint(self.using)
-            lobj = cursor.db.connection.lobject(0, "n", 0, None)
-            lobj.write(blob_data)
+            lobject = cursor.db.connection.lobject(0, "n", 0, None)
+            lobject.write(blob_data)
             cursor.execute("update files_attachment set blob = %s, slug = %s, \
-                            checksum = %s where id = %s", (lobj.oid, slug, checksum, instance.pk))
-            lobj.close()
+                            checksum = %s where id = %s", (lobject.oid, slug, checksum, instance.pk))
+            lobject.close()
             transaction.savepoint_commit(sid, using=self.using)
         except IntegrityError, e:
             transaction.savepoint_rollback(sid, using=self.using)
@@ -221,7 +221,16 @@ class PostgreSQLStorage(DatabaseStorage):
         """
         Unlink the binary data before deleting
         """
-        pass
+        cursor = connections[self.using].cursor()
+        try:
+            sid = transaction.savepoint(self.using)
+            lobject = cursor.db.connection.lobject(instance.blob, "w")
+            lobject.unlink()
+            lobject.close()
+            transaction.savepoint_commit(sid, using=self.using)
+        except IntegrityError, e:
+            transaction.savepoint_rollback(sid, using=self.using)
+            raise e
 
 
 class MySQLStorage(DatabaseStorage):

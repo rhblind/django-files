@@ -165,21 +165,6 @@ class PostgreSQLStorage(DatabaseStorage):
         """
         return name
     
-    def _delete(self, name):
-        """
-        Remove the blob field from the row.
-        """
-        try:
-            attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
-            attachment.blob = None
-            attachment.save()
-        except Attachment.DoesNotExist:
-            # If not the attachment row exists,
-            # do nothing.
-            pass
-        except Exception, e:
-            raise e
-    
     def _write_binary(self, instance, content):
         """
         Do the actual writing of binary data to the table.
@@ -281,21 +266,6 @@ class SQLiteStorage(DatabaseStorage):
         """
         return name
     
-    def _delete(self, name):
-        """
-        Remove the blob field from the row.
-        """
-        try:
-            attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
-            attachment.blob = None
-            attachment.save()
-        except Attachment.DoesNotExist:
-            # If not the attachment row exists,
-            # do nothing.
-            pass
-        except Exception, e:
-            raise e
-        
     def _write_binary(self, instance, content):
         """
         Do the actual writing of binary data to the table.

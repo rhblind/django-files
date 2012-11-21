@@ -206,7 +206,7 @@ def post_save_attachment_callback(sender, instance, created, **kwargs):
 
 
 @receiver(signals.pre_delete, sender=Attachment)
-def post_delete_callback(sender, instance, **kwargs):
+def pre_delete_callback(sender, instance, **kwargs):
     """
     Emit the `unlink_binary` signal to perform extra
     work before removing if required by backend.

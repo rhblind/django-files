@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import os
 import urlparse
 import itertools
 from StringIO import StringIO
 from django.conf import settings
 from django.db import connections, transaction
-from django.core import urlresolvers
 from django.core.files.storage import Storage, get_storage_class
 from django.core.files.base import File
 from django.dispatch.dispatcher import receiver
@@ -13,8 +13,8 @@ from django.template.defaultfilters import slugify
 
 from files.utils import md5buffer
 from files.models import Attachment
-from files.forms import AttachmentForm
 from files.signals import write_binary, unlink_binary
+from django.core import urlresolvers
 
 
 class DatabaseStorage(Storage):
@@ -37,6 +37,10 @@ class DatabaseStorage(Storage):
     def __init__(self, using=None, base_url=None):
         self.using = using or "default"
         self.base_url = base_url or getattr(settings, "MEDIA_URL", "")
+    
+    #
+    # These methods _must_ be overridden by subclasses.
+    #
     
     def _open(self, name, mode="rb"):
         """
@@ -87,17 +91,14 @@ class DatabaseStorage(Storage):
         free and available for new content to be written to
         on target storage system
         """
-        # TODO: This is too expensive, and requires a new database lookup
-        # on each iteration. Implement some caching method, or search through
-        # a lazy queryset
-        name = name.replace("\\", "/")
-        count = itertools.count(1)
+        dir_name, file_name = os.path.split(name)
+        file_root, file_ext = os.path.splitext(file_name)
 
+        count = itertools.count(1)
         while self.exists(name):
-            namelist = name.split("/")
-            dir_name, file_name = "/".join(namelist[:-1]), namelist[-1:][0]
-            file_root, file_ext = file_name.split(".")
-            name = "/".join((dir_name, "%s_%s.%s")) % (file_root, count.next(), file_ext)
+            # FIXME: This is a bit expensive, and requires a new database lookup
+            # on each iteration.
+            name = os.path.join(dir_name, "%s_%s%s" % (file_root, count.next(), file_ext))
         return name
     
     def url(self, name):
@@ -106,19 +107,19 @@ class DatabaseStorage(Storage):
         return urlparse.urljoin(self.base_url, name).replace("\\", "/")
     
     def size(self, name):
-        row = Attachment.objects.using(self.using).get(attachment__exact=name)
-        return row.size
+        attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
+        return attachment.size
         
     def accessed_time(self, name):
         raise NotImplementedError("Access time is not tracked in database storage")
     
     def created_time(self, name):
-        row = Attachment.objects.using(self.using).get(attachment__exact=name)
-        return row.created
+        attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
+        return attachment.created
         
     def modified_time(self, name):
-        row = Attachment.objects.using(self.using).get(attachment__exact=name)
-        return row.modified
+        attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
+        return attachment.modified
         
 
 class PostgreSQLStorage(DatabaseStorage):
@@ -128,7 +129,86 @@ class PostgreSQLStorage(DatabaseStorage):
     def __init__(self, using=None, base_url=None):
         super(PostgreSQLStorage, self).__init__(using, base_url)
         
-        raise NotImplementedError("Support for PostgreSQL databases is not yet implemented.")
+    def url(self, name):
+        attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
+        if not attachment.slug:
+            # If the slug field is empty, this attachment has just been
+            # saved, but has not yet executed the `write_binary` signal.
+            # Fall back to the super url.
+            return super(PostgreSQLStorage, self).url(name)
+        return urlresolvers.reverse("download-attachment", kwargs={"slug": attachment.slug})
+    
+    def _open(self, name, mode="rb"):
+        """
+        PostgreSQL requires a little work..
+        """
+        try:
+            cursor = connections[self.using].cursor()
+            attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
+            
+        except Exception, e:
+            raise e
+        
+        
+        
+        f = File(StringIO(attachment.blob), attachment.filename)
+        f.size = attachment.size
+        f.mode = mode
+        return f
+    
+    def _save(self, name, content):
+        """
+        Do nothing.
+        We are calling a special `write_binary` signal
+        in the Attachment save() method, which will call the `_write_binary()`
+        method below, and write the binary file into the Attachment row.
+        """
+        return name
+    
+    def _delete(self, name):
+        """
+        Remove the blob field from the row.
+        """
+        try:
+            attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
+            attachment.blob = None
+            attachment.save()
+        except Attachment.DoesNotExist:
+            # If not the attachment row exists,
+            # do nothing.
+            pass
+        except Exception, e:
+            raise e
+    
+    def _write_binary(self, instance, content):
+        """
+        Do the actual writing of binary data to the table.
+        This method is called after the model has been saved,
+        and can therefore be used to insert data based on
+        information which was not accessible in the save method
+        on the model.
+        """
+        pass
+#        import sqlite3
+#        cursor = connections[self.using].cursor()
+#        if isinstance(content, buffer):
+#            # If the content is a buffer object, this is an already
+#            # existing attachment. Check if the content has changed.
+#            cursor.execute("select checksum from files_attachment where id = %s", (instance.pk, ))
+#            new, orig = md5buffer(content), cursor.fetchone()[0]
+#            if new == orig:
+#                return
+#            else:
+#                blob = sqlite3.Binary(content)
+#        else:
+#            blob = sqlite3.Binary(content.file.read())
+#
+#        slug = slugify(instance.pre_slug)
+#        checksum = md5buffer(blob)
+#        cursor.execute("update files_attachment set blob = %s, slug = %s, \
+#                        checksum = %s where id = %s",
+#                       (blob, slug, checksum, instance.pk))
+#        transaction.commit_unless_managed(using=self.using)
     
     def _unlink_binary(self, instance):
         """
@@ -153,14 +233,23 @@ class SQLiteStorage(DatabaseStorage):
     """
     def __init__(self, using=None, base_url=None):
         super(SQLiteStorage, self).__init__(using, base_url)
-        
+    
+    def url(self, name):
+        attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
+        if not attachment.slug:
+            # If the slug field is empty, this attachment has just been
+            # saved, but has not yet executed the `write_binary` signal.
+            # Fall back to the super url.
+            return super(SQLiteStorage, self).url(name)
+        return urlresolvers.reverse("download-attachment", kwargs={"slug": attachment.slug})
+       
     def _open(self, name, mode="rb"):
         """
         Return a File object.
         """
-        row = Attachment.objects.using(self.using).get(attachment__exact=name)
-        f = File(StringIO(row.blob), row.filename)
-        f.size = row.size
+        attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
+        f = File(StringIO(attachment.blob), attachment.filename)
+        f.size = attachment.size
         f.mode = mode
         return f
     
@@ -178,9 +267,9 @@ class SQLiteStorage(DatabaseStorage):
         Remove the blob field from the row.
         """
         try:
-            row = Attachment.objects.using(self.using).get(attachment__exact=name)
-            row.blob = None
-            row.save()
+            attachment = Attachment.objects.using(self.using).get(attachment__exact=name)
+            attachment.blob = None
+            attachment.save()
         except Attachment.DoesNotExist:
             # If not the attachment row exists,
             # do nothing.

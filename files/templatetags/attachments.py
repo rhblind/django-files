@@ -157,7 +157,19 @@ class AttachmentFormNode(BaseAttachmentNode):
         context[self.as_varname] = self.get_form(context)
         return ""
     
+
+class AttachmentEditFormNode(AttachmentFormNode):
+    """
+    Insert a form for the attachment into the context.
+    """
+    def get_form(self, context):
+        obj = self.get_object(context)
+        if obj:
+            return files.get_form(obj)
+        else:
+            return None
     
+
 class RenderAttachmentFormNode(AttachmentFormNode):
     """
     Render the attachment form directly
@@ -198,8 +210,24 @@ class RenderAttachmentFormNode(AttachmentFormNode):
             return formstr
         else:
             return ""
+
+
+class RenderAttachmetEditFormNode(AttachmentEditFormNode):
+    """
+    Render the attachment edit form directly
+    """
+    
+    @classmethod
+    def handle_token(cls, parser, token):
+        """
         
+        """
+        pass
+    
+    def render(self, context):
+        pass
         
+
 class RenderAttachmentListNode(AttachmentListNode):
     """
     Render the attachment list directly

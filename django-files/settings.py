@@ -22,7 +22,7 @@ DATABASES = {
     }
 }
 
-#DEFAULT_FILE_STORAGE = "files.storage.SQLiteStorage"
+DEFAULT_FILE_STORAGE = "files.storage.SQLiteStorage"
 
 
 # Local time zone for this installation. Choices can be found here:

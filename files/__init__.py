@@ -68,7 +68,7 @@ def get_form():
         return get_storage_backend().get_form()
     else:
         return AttachmentForm
-    
+
 
 def get_form_target():
     """

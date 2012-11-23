@@ -21,6 +21,14 @@
                     and the django.contrib.comments framework.<br />
                     
                 </p>
+                <div class="grid_12">
+                    <ul>
+                        <li><a href="{% url wiz1 %}">Basic usage</a></li>
+                        <li><a href="{% url wiz2 %}">View attachment details</a></li>
+                        <li><a href="{% url wiz3 %}">Upload attachments</a></li>
+                        <li><a href="{% url wiz4 %}">Download attachments</a></li>
+                    </ul>
+                </div>
             </div>
             <div class="grid_6">
                 <h2>Features</h2>
@@ -47,11 +55,7 @@
         </div>
         
         <div class="grid_6">
-            <h3>Render attachment list</h3>
-
-            {% for shape in shapes %}
-                {% render_attachment_list for shape %}
-            {% endfor %}
+            
         </div>
         
     </div>

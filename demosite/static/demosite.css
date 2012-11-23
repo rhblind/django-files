@@ -13,7 +13,7 @@ a {
   text-decoration: none;
 }
 
-.container_12 a {
+.container_12, .grid_12, .grid_6 a {
     color: #123;
 }
 

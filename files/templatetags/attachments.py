@@ -139,7 +139,7 @@ class AttachmentFormNode(BaseAttachmentNode):
     def get_form(self, context):
         obj = self.get_object(context)
         if obj:
-            return files.get_form()
+            return files.get_form()(obj)
         else:
             return None
         
@@ -158,16 +158,16 @@ class AttachmentFormNode(BaseAttachmentNode):
         return ""
     
 
-class AttachmentEditFormNode(AttachmentFormNode):
-    """
-    Insert a form for the attachment into the context.
-    """
-    def get_form(self, context):
-        obj = self.get_object(context)
-        if obj:
-            return files.get_form(obj)
-        else:
-            return None
+#class AttachmentEditFormNode(AttachmentFormNode):
+#    """
+#    Insert a form for the attachment into the context.
+#    """
+#    def get_form(self, context):
+#        obj = self.get_object(context)
+#        if obj:
+#            return files.get_form()(obj)
+#        else:
+#            return None
     
 
 class RenderAttachmentFormNode(AttachmentFormNode):
@@ -212,20 +212,20 @@ class RenderAttachmentFormNode(AttachmentFormNode):
             return ""
 
 
-class RenderAttachmetEditFormNode(AttachmentEditFormNode):
-    """
-    Render the attachment edit form directly
-    """
-    
-    @classmethod
-    def handle_token(cls, parser, token):
-        """
-        
-        """
-        pass
-    
-    def render(self, context):
-        pass
+#class RenderAttachmetEditFormNode(AttachmentEditFormNode):
+#    """
+#    Render the attachment edit form directly
+#    """
+#
+#    @classmethod
+#    def handle_token(cls, parser, token):
+#        """
+#
+#        """
+#        pass
+#
+#    def render(self, context):
+#        pass
         
 
 class RenderAttachmentListNode(AttachmentListNode):
@@ -389,17 +389,17 @@ def get_attachment_view(attachment):
     return files.get_view_url(attachment)
 
 
-@register.simple_tag
-def get_edit_download(attachment):
-    """
-    Get the edit URL for an attachment.
-
-    Example::
-        
-        <a href="{% get_attachment_edit attachment %}">edit</a>
-    """
-
-    return files.get_edit_url(attachment)
+#@register.simple_tag
+#def get_edit_url(attachment):
+#    """
+#    Get the edit URL for an attachment.
+#
+#    Example::
+#
+#        <a href="{% get_attachment_edit attachment %}">edit</a>
+#    """
+#
+#    return files.get_edit_url(attachment)
 
 
 @register.simple_tag

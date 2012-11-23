@@ -16,6 +16,7 @@ from django.core.files.storage import get_storage_class
 
 from files.utils import md5buffer
 from files.signals import write_binary, unlink_binary
+from django.core.exceptions import ValidationError
 
 
 def get_upload_to(instance, filename):
@@ -128,9 +129,12 @@ class Attachment(BaseAttachmentAbstractModel):
         """
         This method is called before each save.
         """
-        self.size = self.attachment.size
-        if hasattr(self.attachment.file, "content_type"):
-            self.mimetype = self.attachment.file.content_type
+        try:
+            self.size = self.attachment.size
+            if hasattr(self.attachment.file, "content_type"):
+                self.mimetype = self.attachment.file.content_type
+        except ValueError, e:
+            raise ValidationError(e.args[0])
         
     def save(self, *args, **kwargs):
         """

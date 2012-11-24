@@ -20,7 +20,7 @@ class AttachmentAdmin(admin.ModelAdmin):
         ("Metadata", {"fields": ("mimetype", "size", "checksum", "created", "modified")})
     ]
     list_display = ("attachment", "mimetype", "content_type", "object_id", "is_public",
-                    "created", "ip_address", "site")
+                    "backend", "created", "ip_address", "site")
     ordering = ("-created", "content_type")
     actions = ["set_is_public", "set_is_private"]
     
@@ -63,8 +63,8 @@ class AttachmentAdmin(admin.ModelAdmin):
     
     def _display_message(self, request, queryset, message):
         n = queryset.count()
-        msg = ungettext(u"1 comment was successfully %(action)s.",
-                        u"%(count)s comments were successfully %(action)s.", n)
+        msg = ungettext(u"1 attachment was successfully %(action)s.",
+                        u"%(count)s attachments were successfully %(action)s.", n)
         self.message_user(request, msg % {"count": n, "action": message(n)})
     
 

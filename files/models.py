@@ -148,7 +148,7 @@ class Attachment(BaseAttachmentAbstractModel):
             # save the instance and emit the `write_binary` signal
             # to write the binary data into the blob field.
             try:
-                content = self.attachment.file or self.blob
+                content = self.attachment.file
                 super(Attachment, self).save(*args, **kwargs)
                 write_binary.send(sender=Attachment, instance=self, content=content)
             except Exception:
@@ -200,7 +200,7 @@ def pre_save_callback(sender, instance, **kwargs):
 
 
 @receiver(signals.post_save, sender=Attachment)
-def post_save_attachment_callback(sender, instance, created, **kwargs):
+def post_save_callback(sender, instance, created, **kwargs):
     """
     Flag the model with a _created flag to indicate
     that this is a new attachment.

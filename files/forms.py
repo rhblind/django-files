@@ -15,20 +15,19 @@ class AttachmentForm(forms.ModelForm):
     Modelform for uploading and/or editing
     attachments.
     """
+    # Security fields
+    timestamp = forms.IntegerField(widget=forms.HiddenInput)
+    security_hash = forms.CharField(min_length=40, max_length=40, widget=forms.HiddenInput)
+    honeypot = forms.CharField(required=False, label=_("If you enter anything in this field "\
+                                                       "your attachment fill be treated as spam."))
+
     def __init__(self, target_object, *args, **kwargs):
         self.target_object = target_object
         initial = kwargs.pop("initial", {})
         initial.update(self.generate_security_data())
         kwargs["initial"] = initial
         super(AttachmentForm, self).__init__(*args, **kwargs)
-
         self.fields["description"].widget.attrs["placeholder"] = "File description"
-    
-    # Security fields
-    timestamp = forms.IntegerField(widget=forms.HiddenInput)
-    security_hash = forms.CharField(min_length=40, max_length=40, widget=forms.HiddenInput)
-    honeypot = forms.CharField(required=False, label=_("If you enter anything in this field "\
-                                                       "your attachment fill be treated as spam."))
     
     class Meta:
         model = Attachment
@@ -36,7 +35,7 @@ class AttachmentForm(forms.ModelForm):
                   "is_public", "timestamp", "security_hash", "honeypot")
         widgets = {
             "content_type": forms.HiddenInput(),
-            "object_id": forms.HiddenInput()
+            "object_id": forms.HiddenInput(),
         }
     
     def security_errors(self):
@@ -53,7 +52,6 @@ class AttachmentForm(forms.ModelForm):
         """
         Generate initial security data for the form.
         """
-        # Use the original timestamp
         timestamp = int(time.time())
         security_dict = {
             "content_type": ContentType.objects.get_for_model(self.target_object),
@@ -85,9 +83,6 @@ class AttachmentForm(forms.ModelForm):
         value = "-".join(info)
         return salted_hmac(key_salt, value).hexdigest()
     
-    #
-    # Clean methods
-    #
     def clean_security_hash(self):
         """
         Make sure the security hash match what's expected.
@@ -116,12 +111,6 @@ class AttachmentForm(forms.ModelForm):
             raise forms.ValidationError("Timestamp check failed")
         return timestamp
     
-#    def clean_attachment(self):
-#        """
-#        Make sure the expected checksum of the attachment file match.
-#        """
-#        pass
-
     def clean_honeypot(self):
         """
         Make sure the honeypot field is empty.

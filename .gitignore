@@ -17,3 +17,4 @@ _svn
 .pydevproject
 .settings
 demosite/media/attachments/*
+docs/_build/*

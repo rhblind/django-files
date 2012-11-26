@@ -172,15 +172,16 @@ class PostgreSQLStorage(DatabaseStorage):
         # file to the database
         content.seek(0)
         blob_data = content.read()
-        slug = slugify(instance.pre_slug)
-        checksum = md5buffer(content)
+        instance.slug = slugify(instance.pre_slug)
+        instance.checksum = md5buffer(content)
         
         try:
             sid = transaction.savepoint(self.using)
             lobject = cursor.db.connection.lobject(0, "n", 0, None)
             lobject.write(blob_data)
             cursor.execute("update files_attachment set blob = %s, slug = %s, \
-                            checksum = %s where id = %s", (lobject.oid, slug, checksum, instance.pk))
+                            checksum = %s where id = %s", (lobject.oid, instance.slug,
+                                                           instance.checksum, instance.pk))
             lobject.close()
             transaction.savepoint_commit(sid, using=self.using)
         except IntegrityError, e:
@@ -261,7 +262,6 @@ class SQLiteStorage(DatabaseStorage):
         information which was not accessible in the save method
         on the model.
         """
-        import sqlite3
         cursor = connections[self.using].cursor()
         if not (hasattr(instance, "_created") and instance._created is True):
             cursor.execute("select checksum from files_attachment where id = %s", (instance.pk, ))
@@ -273,11 +273,11 @@ class SQLiteStorage(DatabaseStorage):
         # or it has changed. In either case, write the
         # file to the database.
         content.seek(0)
-        blob_data = sqlite3.Binary(content.read())
-        slug = slugify(instance.pre_slug)
-        checksum = md5buffer(content)
+        blob_data = buffer(content.read())
+        instance.slug = slugify(instance.pre_slug)
+        instance.checksum = md5buffer(content)
         cursor.execute("update files_attachment set blob = %s, slug = %s, \
-                        checksum = %s where id = %s", (blob_data, slug, checksum, instance.pk))
+                        checksum = %s where id = %s", (blob_data, instance.slug, instance.checksum, instance.pk))
         transaction.commit_unless_managed(using=self.using)
 
 
@@ -309,6 +309,3 @@ def unlink_binary_callback(sender, instance, **kwargs):
     storage = get_storage_class()(instance._state.db, instance.attachment.url)
     if hasattr(storage, "_unlink_binary"):
         storage._unlink_binary(instance)
-    
-    
-    

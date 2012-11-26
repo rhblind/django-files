@@ -2,6 +2,7 @@
 
 import os
 import re
+import errno
 from django.db import models
 from django.db.models import signals
 from django.conf import settings
@@ -15,7 +16,7 @@ from django.template.defaultfilters import slugify
 from django.core.files.storage import get_storage_class
 
 from files.utils import md5buffer
-from files.signals import write_binary, unlink_binary
+from files.signals import write_binary, unlink_binary, post_write, post_unlink
 from django.core.exceptions import ValidationError
 
 
@@ -151,8 +152,8 @@ class Attachment(BaseAttachmentAbstractModel):
                 content = self.attachment.file
                 super(Attachment, self).save(*args, **kwargs)
                 write_binary.send(sender=Attachment, instance=self, content=content)
-            except Exception:
-                raise
+            except Exception, e:
+                raise e
         elif self.backend == "FileSystemStorage":
             # If using the default FileSystemStorage,
             # save some extra attributes as well.
@@ -163,6 +164,10 @@ class Attachment(BaseAttachmentAbstractModel):
             super(Attachment, self).save(force_update=True)
         else:
             raise UnsupportedBackend("Unsupported storage backend.")
+        # Send the post_write signal after save even if backend does not
+        # use the write_binary method (such as the FileStorageBackend), to
+        # keep consistancy between all backends.
+        post_write.send(sender=Attachment, instance=self)
     
     @property
     def pre_slug(self):
@@ -216,3 +221,31 @@ def pre_delete_callback(sender, instance, **kwargs):
     work before removing if required by backend.
     """
     unlink_binary.send(sender=Attachment, instance=instance)
+    post_unlink.send(sender=Attachment, instance=instance)
+
+
+@receiver(signals.post_delete, sender=Attachment)
+def post_delete_callback(sender, instance, **kwargs):
+    """
+    The FileStorage backend does not remove files when the
+    reference is deleted, to avvoid data loss.
+    If settings.FORCE_FILE_REMOVAL = True, delete the file
+    from disk, else rename the file to <filename.ext>_removed
+    to indicate that this file is removed from the database.
+    """
+    if instance.backend == "FileSystemStorage":
+        rename = getattr(settings, "FORCE_FILE_RENAME", False)
+        if rename is True:
+            # Rename the file to indicate removal of database reference.
+            # There is a race condition between os.path.exists and os.rename:
+            # If os.rename fails with ENOENT, the file does not exist anymore,
+            # and we continue as usual.
+            name = os.path.join(instance.attachment.storage.location, instance.attachment.name)
+            if os.path.exists(name):
+                try:
+                    new_name = "".join((name,
+                         getattr(settings, "FORCE_FILE_RENAME_POSTFIX", "_removed")))
+                    os.rename(name, new_name)
+                except OSError, e:
+                    if e.errno != errno.ENOENT:
+                        raise e

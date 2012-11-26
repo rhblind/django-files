@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from django.conf import settings
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest,\
+    HttpResponseRedirect
 from django.core import urlresolvers
-from django.template.loader import render_to_string
+from django.template.loader import render_to_string, select_template,\
+    get_template
 from django.contrib.contenttypes.models import ContentType
 from django.views.generic.detail import DetailView, SingleObjectMixin,\
     BaseDetailView
@@ -14,6 +16,8 @@ from files.models import Attachment
 from files.forms import AttachmentForm
 from django.core.urlresolvers import NoReverseMatch
 from django.template.defaultfilters import slugify
+from django.shortcuts import render_to_response
+from django.template.context import RequestContext
 
 
 class AttachmentPostBadRequest(HttpResponseBadRequest):
@@ -31,18 +35,7 @@ class AttachmentPostBadRequest(HttpResponseBadRequest):
 class AttachmentCreateView(CreateView):
     model = Attachment
     form_class = AttachmentForm
-    
-    def get_success_url(self):
-        try:
-            return super(AttachmentCreateView, self).get_success_url()
-        except NoReverseMatch:
-            # Since instance is saved, but not yet updated with data
-            # from the `write_binary` raw sql method in the storage backend,
-            # slugify the pre_slug (which is unique at this stage,
-            # and will resolve to the correct slug).
-            self.object.slug = slugify(self.object.pre_slug)
-        finally:
-            return super(AttachmentCreateView, self).get_success_url()
+    template_name = "attachments/form.html"
     
     def get_form(self, form_class):
         kwargs = self.get_form_kwargs()
@@ -52,11 +45,12 @@ class AttachmentCreateView(CreateView):
             ctype = ContentType.objects.get_for_id(ctype_pk)
             obj = ctype.get_object_for_this_type(pk=object_pk)
         except KeyError, e:
+            # FIXME: Does not work!
             return AttachmentPostBadRequest(e.args[0])
         return form_class(obj, **kwargs)
     
     def form_valid(self, form):
-        # Set some additional attributes
+        # Set some additional attributes from request.
         form.instance.creator = self.request.user
         form.instance.ip_address = self.request.META["REMOTE_ADDR"]
         return super(AttachmentCreateView, self).form_valid(form)
@@ -78,8 +72,46 @@ class AttachmentDetailView(DetailView):
 
 class AttachmentDeleteView(DeleteView):
     model = Attachment
+    context_object_name = "attachment"
+    
+    def get_template_names(self):
+        """
+        Add content type object app_name and model
+        to template search path.
+        """
+        names = super(AttachmentDeleteView, self).get_template_names()
+        if self.object:
+            ctype = self.object.content_type
+            template_search_list = [
+                "attachments/%s/%s/delete.html" % (ctype.app_label, ctype.model),
+                "attachments/%s/delete.html" % ctype.app_label,
+                "attachments/%s/delete.html" % ctype.model,
+                "attachments/delete.html"
+            ]
+            names = [p for p in template_search_list] + names
+        return names
+    
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.object.delete()
 
-
+        # If success_url is provided, redirect.
+        # Else, render a default response using
+        # either a default or custom template.
+        if self.success_url:
+            return HttpResponseRedirect(self.success_url)
+        else:
+            ctype = self.object.content_type
+            template_search_list = [
+                "attachments/%s/%s/deleted.html" % (ctype.app_label, ctype.model),
+                "attachments/%s/deleted.html" % ctype.app_label,
+                "attachments/%s/deleted.html" % ctype.model,
+                "attachments/deleted.html"
+            ]
+            template = select_template(template_search_list)
+            return render_to_response(template.name, self.get_context_data(), RequestContext(request))
+    
+    
 class AttachmentDownloadView(BaseDetailView, SingleObjectMixin):
     """
     Returns the attachment file as a HttpResponse.

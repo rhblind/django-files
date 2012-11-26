@@ -403,6 +403,19 @@ def get_attachment_view(attachment):
 
 
 @register.simple_tag
+def get_attachment_delete(attachment):
+    """
+    Get the delete URL for an attachment.
+
+    Example::
+        
+        <a href="{% get_attachment_delete attachment %}">delete</a>
+    """
+
+    return files.get_delete_url(attachment)
+
+
+@register.simple_tag
 def get_attachment_download(attachment):
     """
     Get the download URL for an attachment.

@@ -22,8 +22,20 @@ DATABASES = {
     }
 }
 
-DEFAULT_FILE_STORAGE = "files.storage.SQLiteStorage"
+# Set the filesystem storage backend to use.
+#DEFAULT_FILE_STORAGE = "files.storage.SQLiteStorage"
 
+# Set this to whatever you want your removed files to be
+# appended with. Defaults to "_removed". This setting has no
+# effect on the database storage backends, as they are gently
+# killed.
+FORCE_FILE_RENAME_POSTFIX = "_rubbish"
+
+# If using the FileSystemStorage, setting this to True will
+# append a FORCE_FILE_RENAME_POSTFIX postfix on files in the filesystem which
+# has had their database reference deleted. Has no effect on
+# database storage backends. 
+FORCE_FILE_RENAME = True
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

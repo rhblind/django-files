@@ -1,6 +1,16 @@
 {% extends "attachments/base.html" %}
+{% load i18n %}
 
+{% block title %}{% trans "Attachment deleted"%}{% endblock %}
 
 {% block content %}
-   
+   <h1>{% trans "Successfully deleted attachment" %}</h1>
+   <dt id="attachment-{{ attachment.pk }}">
+       {{ attachment.created }} - {{ attachment.filename }} - {{ attachment.mimetype }}
+   </dt>
+   <dd>
+       <p>
+           {{ attachment.filename}} {% trans "was successfully deleted!" %}
+       </p>
+   </dd>
 {% endblock %}

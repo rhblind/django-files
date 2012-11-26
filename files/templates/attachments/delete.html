@@ -1,6 +1,18 @@
 {% extends "attachments/base.html" %}
+{% load i18n %}
 
+{% block title %}{% trans "Delete attachment" %}{% endblock %}
 
 {% block content %}
-   
+    <h1>{% trans "Really delete this attachment?" %}</h1>
+    <dt id="attachment-{{ attachment.pk }}">
+            {{ attachment.created }} - {{ attachment.filename }} - {{ attachment.mimetype }}
+        </dt>
+        <dd><p>{{ attachment }}</p></dd>
+        <form action="." method="post">{% csrf_token %}
+            {% if next %}<div><input type="hidden" name="next" value="{{ next }}" id="next" /></div>{% endif %}
+            <p class="submit">
+                <input type="submit" name="submit" value="{% trans "Delete" %}" /> or <a href="{{ attachment.get_absolute_url }}">cancel</a>
+            </p>
+        </form>
 {% endblock %}

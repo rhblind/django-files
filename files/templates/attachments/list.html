@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load attachments %}
 <dl id="attachments">
     {% for attachment in attachment_list %}
@@ -6,10 +7,10 @@
         </dt>
         <dd><p>{{ attachment }}
             <ul class="attachment-actions">
-                <li><a href="{% get_attachment_view attachment %}">view</a></li>
-                <li><a href="{% get_attachment_view attachment %}">edit</a></li>
-                <li><a href="{% get_attachment_view attachment %}">delete</a></li>
-                <li><a href="{% get_attachment_download attachment %}">download</a></li>
+                <li><a href="{% get_attachment_view attachment %}">{% trans "view "%}</a></li>
+                <li><a href="{% get_attachment_view attachment %}">{% trans "edit "%}</a></li>
+                <li><a href="{% get_attachment_delete attachment %}">{% trans "delete "%}</a></li>
+                <li><a href="{% get_attachment_download attachment %}">{% trans "download "%}</a></li>
             </ul>
             </p>
         </dd>

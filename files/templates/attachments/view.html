@@ -1,16 +1,30 @@
 {% extends "attachments/base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "View your attachment "%}{% endblock %}
+{% block title %}{% trans "View attachment"%}{% endblock %}
 
 {% block content %}
     {% load attachments %}
-    <div>
-        <h1>{% trans "Detailed information about " %}{{ attachment.filename }}</h1>
-        <fieldset>
-            <p>
-                {{ attachment.filename }}
-            </p>
-        </fieldset>
-    </div>
+    <h1>{% trans "View information about " %}{{ attachment.filename }}</h1>
+    <dt id="attachment-{{ attachment.pk}}">
+        <h3>{{ attachment.filename }}</h3>
+    </dt>
+    <dd>{% trans "Description" %}: {{ attachment.description }}</dd>
+    <dd>{%trans "File size" %}: {{ attachment.size|filesizeformat }}</dd>
+    <dd>{% trans "Mimetype" %}: {{ attachment.mimetype }}</dd>
+    <dd>{% trans "Storage backend" %}: {{ attachment.backend }}</dd>
+    <dd>{% trans "Is public" %}: {{ attachment.is_public }}</dd>
+    <dd>{% trans "Checksum" %}: {{ attachment.checksum }}</dd>
+    <dd>{% trans "Creator" %}: {{ attachment.creator }}</dd>
+    <dd>{% trans "Created" %}: {{ attachment.created }}</dd>
+    <dd>{% trans "Modified" %}: {{ attachment.modified }}</dd>
+    <dd>
+        <ul class="attachment-actions">
+            <li><a href="{% get_attachment_view attachment %}">{% trans "edit "%}</a></li>
+            <li><a href="{% get_attachment_delete attachment %}">{% trans "delete "%}</a></li>
+            <li><a href="{% get_attachment_download attachment %}">{% trans "download "%}</a></li>
+        </ul>
+        
+    </dd> 
+ 
 {% endblock %}

@@ -9,12 +9,8 @@ body {
 }
 
 a {
-  color: #fff;
+  color: #123;
   text-decoration: none;
-}
-
-.container_12, .grid_12, .grid_6 a {
-    color: #123;
 }
 
 a:hover {
@@ -66,7 +62,7 @@ label {
 
 .note {
     position: relative;  
-    padding: 10px 15px 50px 15px;
+    padding: 10px 10px 10px 10px;
     margin: 0 auto;  
     background-color: #fff;  
     -webkit-box-shadow: 0 0 4px rgba(0, 0, 0, 0.2), inset 0 0 50px rgba(0, 0, 0, 0.1);  
@@ -74,7 +70,7 @@ label {
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.2), inset 0 0 50px rgba(0, 0, 0, 0.1);
 }
 
-.note a {
-    color: #123;
-    text-decoration: underline; 
+.page-header a {
+    color: #fff;
+    text-decoration: none;
 }

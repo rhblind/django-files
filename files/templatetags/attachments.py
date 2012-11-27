@@ -162,11 +162,12 @@ class AttachmentEditFormNode(AttachmentFormNode):
     """
     Insert a form for the attachment model instance into the context
     """
-    
+       
     def get_form(self, context):
         obj = self.get_object(context)
         if obj:
-            return files.get_form(obj)
+            target_obj = obj.content_type.get_object_for_this_type(pk=obj.object_id)
+            return files.get_form()(target_obj, **{"instance": obj})
         else:
             return None
     
@@ -213,7 +214,7 @@ class RenderAttachmentFormNode(AttachmentFormNode):
             return ""
 
 
-class RenderAttachmentEditFormNode(RenderAttachmentFormNode):
+class RenderAttachmentEditFormNode(RenderAttachmentFormNode, AttachmentEditFormNode):
     """
     Render the edit form directly
     """
@@ -228,7 +229,8 @@ class RenderAttachmentEditFormNode(RenderAttachmentFormNode):
                 "attachments/edit_form.html"
             ]
             context.push()
-            formstr = render_to_string(template_search_list, {"form": self.get_form(context)}, context)
+            formstr = render_to_string(template_search_list, {"form": self.get_form(context),
+                              "attachment_edit_url": files.get_edit_url(self.get_object(context))}, context)
             context.pop()
             return formstr
         else:
@@ -239,7 +241,7 @@ class RenderAttachmentListNode(AttachmentListNode):
     """
     Render the attachment list directly
     """
-    
+
     @classmethod
     def handle_token(cls, parser, token):
         """
@@ -336,7 +338,7 @@ def render_attachment_editform(parser, token):
         {% render_attachment_editform for [object] %}
         {% render_attachment_editform for [app].[model] [object_id] %}
     """
-    return RenderAttachmentFormNode.handle_token(parser, token)
+    return RenderAttachmentEditFormNode.handle_token(parser, token)
 
 
 @register.tag
@@ -362,7 +364,7 @@ def get_attachment_editform(parser, token):
         {% get_attachment_editform for [object] as [varname] %}
         {% get_attachment_editform for [app].[model] [object_id] as [varname] %}
     """
-    return AttachmentFormNode.handle_token(parser, token)
+    return AttachmentEditFormNode.handle_token(parser, token)
 
 
 @register.tag
@@ -419,7 +421,6 @@ def get_view_url(attachment):
         
         <a href="{% get_view_url attachment %}">view</a>
     """
-
     return files.get_view_url(attachment)
 
 
@@ -432,7 +433,6 @@ def get_edit_url(attachment):
 
         <a href="{% get_edit_url attachment %}">edit</a>
     """
-
     return files.get_edit_url(attachment)
 
 
@@ -445,7 +445,6 @@ def get_delete_url(attachment):
         
         <a href="{% get_delete_url attachment %}">delete</a>
     """
-
     return files.get_delete_url(attachment)
 
 
@@ -458,5 +457,4 @@ def get_download_url(attachment):
         
         <a href="{% get_download_url attachment %}">download</a>
     """
-
     return files.get_download_url(attachment)

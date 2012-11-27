@@ -3,12 +3,14 @@
 from __future__ import absolute_import
 
 from django.conf import settings
-from django.http import HttpResponse, HttpResponseBadRequest,\
-    HttpResponseRedirect
-from django.core import urlresolvers
+from django.shortcuts import render_to_response
+from django.contrib.contenttypes.models import ContentType
+from django.template.defaultfilters import slugify
+from django.template.context import RequestContext
 from django.template.loader import render_to_string, select_template,\
     get_template
-from django.contrib.contenttypes.models import ContentType
+from django.http import HttpResponse, HttpResponseBadRequest,\
+    HttpResponseRedirect
 from django.views.generic.detail import DetailView, SingleObjectMixin,\
     BaseDetailView
 from django.views.generic.edit import DeleteView, CreateView, UpdateView,\
@@ -17,10 +19,6 @@ from django.views.generic.edit import DeleteView, CreateView, UpdateView,\
 from files import get_form
 from files.models import Attachment
 from files.forms import AttachmentForm
-from django.core.urlresolvers import NoReverseMatch
-from django.template.defaultfilters import slugify
-from django.shortcuts import render_to_response
-from django.template.context import RequestContext
 
 
 class AttachmentPostBadRequest(HttpResponseBadRequest):
@@ -37,6 +35,7 @@ class AttachmentPostBadRequest(HttpResponseBadRequest):
 
 class AttachmentCreateView(CreateView):
     model = Attachment
+    context_object_name = "attachment"
     form_class = get_form()
     template_name = "attachments/form.html"
     
@@ -61,6 +60,7 @@ class AttachmentCreateView(CreateView):
 
 class AttachmentEditView(UpdateView):
     model = Attachment
+    context_object_name = "attachment"
     form_class = get_form()
     
     def get_form(self, form_class):
@@ -138,6 +138,7 @@ class AttachmentDownloadView(BaseDetailView, SingleObjectMixin):
     Returns the attachment file as a HttpResponse.
     """
     model = Attachment
+    context_object_name = "attachment"
     
     def render_to_response(self, context):
         obj = context["object"]

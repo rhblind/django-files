@@ -7,10 +7,10 @@
         </dt>
         <dd><p>{{ attachment }}
             <ul class="attachment-actions">
-                <li><a href="{% get_attachment_view attachment %}">{% trans "view "%}</a></li>
-                <li><a href="{% get_attachment_view attachment %}">{% trans "edit "%}</a></li>
-                <li><a href="{% get_attachment_delete attachment %}">{% trans "delete "%}</a></li>
-                <li><a href="{% get_attachment_download attachment %}">{% trans "download "%}</a></li>
+                <li><a href="{% get_view_url attachment %}">{% trans "view "%}</a></li>
+                <li><a href="{% get_edit_url attachment %}">{% trans "edit "%}</a></li>
+                <li><a href="{% get_delete_url attachment %}">{% trans "delete "%}</a></li>
+                <li><a href="{% get_download_url attachment %}">{% trans "download "%}</a></li>
             </ul>
             </p>
         </dd>

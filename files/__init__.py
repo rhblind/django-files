@@ -90,14 +90,14 @@ def get_view_url(attachment):
         return urlresolvers.reverse("view-attachment", kwargs={"slug": attachment.slug})
 
 
-#def get_edit_url(attachment):
-#    """
-#    Get the URL for the "edit this attachment" view
-#    """
-#    if get_storage_backend_name() not in CONTRIB_BACKENDS and hasattr(get_storage_backend(), "get_edit_url"):
-#        return get_storage_backend().get_edit_url(attachment)
-#    else:
-#        return urlresolvers.reverse("edit-attachment", kwargs={"slug": attachment.slug})
+def get_edit_url(attachment):
+    """
+    Get the URL for the "edit this attachment" view
+    """
+    if get_storage_backend_name() not in CONTRIB_BACKENDS and hasattr(get_storage_backend(), "get_edit_url"):
+        return get_storage_backend().get_edit_url(attachment)
+    else:
+        return urlresolvers.reverse("edit-attachment", kwargs={"slug": attachment.slug})
 
 
 def get_delete_url(attachment):

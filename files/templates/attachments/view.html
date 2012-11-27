@@ -20,9 +20,9 @@
     <dd>{% trans "Modified" %}: {{ attachment.modified }}</dd>
     <dd>
         <ul class="attachment-actions">
-            <li><a href="{% get_attachment_view attachment %}">{% trans "edit "%}</a></li>
-            <li><a href="{% get_attachment_delete attachment %}">{% trans "delete "%}</a></li>
-            <li><a href="{% get_attachment_download attachment %}">{% trans "download "%}</a></li>
+            <li><a href="{% get_edit_url attachment %}">{% trans "edit "%}</a></li>
+            <li><a href="{% get_delete_url attachment %}">{% trans "delete "%}</a></li>
+            <li><a href="{% get_download_url attachment %}">{% trans "download "%}</a></li>
         </ul>
         
     </dd> 

@@ -158,16 +158,17 @@ class AttachmentFormNode(BaseAttachmentNode):
         return ""
     
 
-#class AttachmentEditFormNode(AttachmentFormNode):
-#    """
-#    Insert a form for the attachment into the context.
-#    """
-#    def get_form(self, context):
-#        obj = self.get_object(context)
-#        if obj:
-#            return files.get_form()(obj)
-#        else:
-#            return None
+class AttachmentEditFormNode(AttachmentFormNode):
+    """
+    Insert a form for the attachment model instance into the context
+    """
+    
+    def get_form(self, context):
+        obj = self.get_object(context)
+        if obj:
+            return files.get_form(obj)
+        else:
+            return None
     
 
 class RenderAttachmentFormNode(AttachmentFormNode):
@@ -212,21 +213,27 @@ class RenderAttachmentFormNode(AttachmentFormNode):
             return ""
 
 
-#class RenderAttachmetEditFormNode(AttachmentEditFormNode):
-#    """
-#    Render the attachment edit form directly
-#    """
-#
-#    @classmethod
-#    def handle_token(cls, parser, token):
-#        """
-#
-#        """
-#        pass
-#
-#    def render(self, context):
-#        pass
-        
+class RenderAttachmentEditFormNode(RenderAttachmentFormNode):
+    """
+    Render the edit form directly
+    """
+    
+    def render(self, context):
+        ctype, object_pk = self.get_target_ctype_pk(context)
+        if object_pk:
+            template_search_list = [
+                "attachments/%s/%s/edit_form.html" % (ctype.app_label, ctype.model),
+                "attachments/%s/edit_form.html" % ctype.app_label,
+                "attachments/%s/edit_form.html" % ctype.model,
+                "attachments/edit_form.html"
+            ]
+            context.push()
+            formstr = render_to_string(template_search_list, {"form": self.get_form(context)}, context)
+            context.pop()
+            return formstr
+        else:
+            return ""
+
 
 class RenderAttachmentListNode(AttachmentListNode):
     """
@@ -271,6 +278,91 @@ class RenderAttachmentListNode(AttachmentListNode):
             return liststr
         else:
             return ""
+
+
+@register.simple_tag
+def attachment_form_target():
+    """
+    Get the target URL for the attachment form.
+
+    Example::
+
+        <form action="{% attachment_form_target %}" method="post">
+    """
+    return files.get_form_target()
+
+
+@register.tag
+def render_attachment_list(parser, token):
+    """
+    Render the attachment list (as returned by ``{% get_attachment_list %}``)
+    through the ``attachments/list.html`` template
+
+    Syntax::
+
+        {% render_attachment_list for [object] %}
+        {% render_attachment_list for [app].[model] [object_id] %}
+
+    Example usage::
+
+        {% render_attachment_list for event %}
+
+    """
+    return RenderAttachmentListNode.handle_token(parser, token)
+
+
+@register.tag
+def render_attachment_form(parser, token):
+    """
+    Render the attachment form (as returned by ``{% render_attachment_form %}``) through
+    the ``attachments/form.html`` template.
+
+    Syntax::
+
+        {% render_attachment_form for [object] %}
+        {% render_attachment_form for [app].[model] [object_id] %}
+    """
+    return RenderAttachmentFormNode.handle_token(parser, token)
+
+
+@register.tag
+def render_attachment_editform(parser, token):
+    """
+    Render the attachment form (as returned by ``{% render_attachment_editform %}``) through
+    the ``attachments/editform.html`` template.
+
+    Syntax::
+
+        {% render_attachment_editform for [object] %}
+        {% render_attachment_editform for [app].[model] [object_id] %}
+    """
+    return RenderAttachmentFormNode.handle_token(parser, token)
+
+
+@register.tag
+def get_attachment_form(parser, token):
+    """
+    Get a (new) form object to upload a new attachment.
+
+    Syntax::
+
+        {% get_attachment_form for [object] as [varname] %}
+        {% get_attachment_form for [app].[model] [object_id] as [varname] %}
+    """
+    return AttachmentFormNode.handle_token(parser, token)
+
+
+@register.tag
+def get_attachment_editform(parser, token):
+    """
+    Get a modelform object to edit an existing attachment.
+
+    Syntax::
+
+        {% get_attachment_editform for [object] as [varname] %}
+        {% get_attachment_editform for [app].[model] [object_id] as [varname] %}
+    """
+    return AttachmentFormNode.handle_token(parser, token)
 
 
 @register.tag
@@ -318,111 +410,53 @@ def get_attachment_list(parser, token):
     return AttachmentListNode.handle_token(parser, token)
 
 
-@register.tag
-def render_attachment_list(parser, token):
-    """
-    Render the attachment list (as returned by ``{% get_attachment_list %}``)
-    through the ``attachments/list.html`` template
-
-    Syntax::
-
-        {% render_attachment_list for [object] %}
-        {% render_attachment_list for [app].[model] [object_id] %}
-
-    Example usage::
-
-        {% render_attachment_list for event %}
-
-    """
-    return RenderAttachmentListNode.handle_token(parser, token)
-
-
-@register.tag
-def get_attachment_form(parser, token):
-    """
-    Get a (new) form object to upload a new attachment.
-
-    Syntax::
-
-        {% get_attachment_form for [object] as [varname] %}
-        {% get_attachment_form for [app].[model] [object_id] as [varname] %}
-    """
-    return AttachmentFormNode.handle_token(parser, token)
-
-
-@register.tag
-def render_attachment_form(parser, token):
-    """
-    Render the attachment form (as returned by ``{% render_attachment_form %}``) through
-    the ``attachments/form.html`` template.
-
-    Syntax::
-
-        {% render_attachment_form for [object] %}
-        {% render_attachment_form for [app].[model] [object_id] %}
-    """
-    return RenderAttachmentFormNode.handle_token(parser, token)
-
-
 @register.simple_tag
-def attachment_form_target():
-    """
-    Get the target URL for the attachment form.
-
-    Example::
-
-        <form action="{% attachment_form_target %}" method="post">
-    """
-    return files.get_form_target()
-
-
-@register.simple_tag
-def get_attachment_view(attachment):
+def get_view_url(attachment):
     """
     Get the view URL for an attachment.
 
     Example::
         
-        <a href="{% get_attachment_view attachment %}">view</a>
+        <a href="{% get_view_url attachment %}">view</a>
     """
 
     return files.get_view_url(attachment)
 
 
-#@register.simple_tag
-#def get_edit_url(attachment):
-#    """
-#    Get the edit URL for an attachment.
-#
-#    Example::
-#
-#        <a href="{% get_attachment_edit attachment %}">edit</a>
-#    """
-#
-#    return files.get_edit_url(attachment)
+@register.simple_tag
+def get_edit_url(attachment):
+    """
+    Get the edit URL for an attachment.
+
+    Example::
+
+        <a href="{% get_edit_url attachment %}">edit</a>
+    """
+
+    return files.get_edit_url(attachment)
 
 
 @register.simple_tag
-def get_attachment_delete(attachment):
+def get_delete_url(attachment):
     """
     Get the delete URL for an attachment.
 
     Example::
         
-        <a href="{% get_attachment_delete attachment %}">delete</a>
+        <a href="{% get_delete_url attachment %}">delete</a>
     """
 
     return files.get_delete_url(attachment)
 
 
 @register.simple_tag
-def get_attachment_download(attachment):
+def get_download_url(attachment):
     """
     Get the download URL for an attachment.
 
     Example::
         
-        <a href="{% get_attachment_download attachment %}">download</a>
+        <a href="{% get_download_url attachment %}">download</a>
     """
 
     return files.get_download_url(attachment)

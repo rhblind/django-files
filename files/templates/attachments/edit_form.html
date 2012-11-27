@@ -1,0 +1,31 @@
+{% extends "attachments/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Edit attachment" %}{% endblock %}
+
+{% block content %}
+    {% load attachments %}
+    <form action="." method="post" enctype="multipart/form-data" >{% csrf_token %}
+    {% if next %}<div><input type="hidden" name="next" value="{{ next }}" /></div>{% endif %}
+    {% if form.errors %}
+        <h1>{% blocktrans count counter=form.errors|length %}Please correct the error below{% plural %}Please correct the errors below{% endblocktrans %}</h1>
+    {% else %}
+        <h1>{% trans "Edit attachment "%}</h1>
+    {% endif %}
+    
+    {% for field in form %}
+        {% if field.is_hidden %}
+            <div>{{ field }}</div>
+        {% else %}
+        {% if field.errors %}{{ field.errors }}{% endif %}
+        <p {% if field.errors %} class="error"{% endif %}
+           {% ifequal field.name "honeypot" %} style="display:none;"{% endifequal %}>
+           {{ field.label_tag }} {{ field }}
+        </p>
+        {% endif %}
+    {% endfor %}
+    <p class="submit">
+        <input type="submit" name="submit" class="submit-attachment" value="{% trans "Save" %}" /> or <a href="{{ attachment.get_absolute_url }}">cancel</a>
+    </p>
+    </form>
+{% endblock %}

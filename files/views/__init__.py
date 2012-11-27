@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
+
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseBadRequest,\
     HttpResponseRedirect
@@ -12,6 +14,7 @@ from django.views.generic.detail import DetailView, SingleObjectMixin,\
 from django.views.generic.edit import DeleteView, CreateView, UpdateView,\
     ModelFormMixin
 
+from files import get_form
 from files.models import Attachment
 from files.forms import AttachmentForm
 from django.core.urlresolvers import NoReverseMatch
@@ -34,7 +37,7 @@ class AttachmentPostBadRequest(HttpResponseBadRequest):
 
 class AttachmentCreateView(CreateView):
     model = Attachment
-    form_class = AttachmentForm
+    form_class = get_form()
     template_name = "attachments/form.html"
     
     def get_form(self, form_class):
@@ -56,9 +59,27 @@ class AttachmentCreateView(CreateView):
         return super(AttachmentCreateView, self).form_valid(form)
     
 
-class AttachmentEditView(UpdateView, ModelFormMixin):
+class AttachmentEditView(UpdateView):
     model = Attachment
-#    success_url = urlresolvers.reverse("edited")
+    form_class = get_form()
+    
+    def get_form(self, form_class):
+        obj = self.object.content_type \
+            .get_object_for_this_type(pk=self.object.object_id)
+        return form_class(obj, **self.get_form_kwargs())
+
+    def get_template_names(self):
+        names = super(AttachmentEditView, self).get_template_names()
+        if self.object:
+            ctype = self.object.content_type
+            template_search_list = [
+                "attachments/%s/%s/edit_form.html" % (ctype.app_label, ctype.model),
+                "attachments/%s/edit_form.html" % ctype.app_label,
+                "attachments/%s/edit_form.html" % ctype.model,
+                "attachments/edit_form.html"
+            ]
+            names = [p for p in template_search_list] + names
+        return names
 
 
 class AttachmentDetailView(DetailView):

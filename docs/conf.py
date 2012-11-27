@@ -18,10 +18,11 @@ import sys, os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
 
-sys.path.insert(0, os.path.abspath('../'))
-
+sys.path.append('../')
+sys.path.append('../django-files')
 from django.core.management import setup_environ
-from django_files import settings
+import settings
+setup_environ(settings)
 
 # -- General configuration -----------------------------------------------------
 

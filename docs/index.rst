@@ -57,7 +57,7 @@ After you have installed django-files in your PYTHONPATH, you need to add it to 
 
 You will also need to enable the `django.contrib.auth`, `django.contrib.contenttypes` and the `django.contrib.sites` apps, as they are used in the Attachment model.
 
-.. autoclass:: models.Attachment
+.. autoclass:: files.models.Attachment
 
 
 Indices and tables

@@ -40,6 +40,7 @@ class AttachmentCreateView(CreateView):
     template_name = "attachments/form.html"
     
     def get_form(self, form_class):
+        # TODO: Better way to fetch object
         kwargs = self.get_form_kwargs()
         try:
             data = kwargs["data"]

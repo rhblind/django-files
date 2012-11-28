@@ -9,7 +9,8 @@ from files.models import Attachment
 
 class AttachmentAdmin(admin.ModelAdmin):
     """
-    A generic admin form for attachments
+    The default form used for the attachment model in the
+    admin interface.
     """
     readonly_fields = ("mimetype", "slug", "size", "checksum", "ip_address",
                        "backend", "created", "modified")
@@ -25,9 +26,6 @@ class AttachmentAdmin(admin.ModelAdmin):
     actions = ["set_is_public", "set_is_private"]
     
     def save_model(self, request, obj, form, change):
-        """
-        Given a model instance save it to the database.
-        """
         if not obj.pk:
             # Only save ip_address for new objects
             obj.ip_address = request.META["REMOTE_ADDR"]
@@ -50,12 +48,20 @@ class AttachmentAdmin(admin.ModelAdmin):
         return actions
     
     def set_is_public(self, request, queryset):
+        """
+        Executes an SQL UPDATE on the queryset and
+        sets all objects is_public = True
+        """
         queryset.update(is_public=True)
         self._display_message(request, queryset,
                   lambda n: ungettext("marked public", "marked public", n))
     set_is_public.short_description = _("Mark selected attachments as public")
     
     def set_is_private(self, request, queryset):
+        """
+        Executes an SQL UPDATE on the queryset and
+        sets all objects is_public = False
+        """
         queryset.update(is_public=False)
         self._display_message(request, queryset,
                   lambda n: ungettext("marked private", "marked private", n))

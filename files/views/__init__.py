@@ -34,6 +34,9 @@ class AttachmentPostBadRequest(HttpResponseBadRequest):
 
 
 class AttachmentCreateView(CreateView):
+    """
+    View responsible for creating new attachments.
+    """
     model = Attachment
     context_object_name = "attachment"
     form_class = get_form()
@@ -60,6 +63,9 @@ class AttachmentCreateView(CreateView):
     
 
 class AttachmentEditView(UpdateView):
+    """
+    Updates an existing attachment with new data.
+    """
     model = Attachment
     context_object_name = "attachment"
     form_class = get_form()
@@ -93,6 +99,9 @@ class AttachmentDetailView(DetailView):
     
 
 class AttachmentDeleteView(DeleteView):
+    """
+    Deletes an attachment from the storage backend.
+    """
     model = Attachment
     context_object_name = "attachment"
     

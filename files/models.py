@@ -37,7 +37,7 @@ class UnsupportedBackend(Exception):
 
 class BlobField(models.Field):
     """
-    Represents a Binary Large OBject field in the database.
+    Represents a Binary Large Object field in the database.
     """
 
     description = _("Binary large object (blob) field")
@@ -207,7 +207,7 @@ def pre_save_callback(sender, instance, **kwargs):
 @receiver(signals.post_save, sender=Attachment)
 def post_save_callback(sender, instance, created, **kwargs):
     """
-    Flag the model with a _created flag to indicate
+    Sets a _created flag on the attachment instance to indicate
     that this is a new attachment.
     """
     if created:
@@ -217,8 +217,8 @@ def post_save_callback(sender, instance, created, **kwargs):
 @receiver(signals.pre_delete, sender=Attachment)
 def pre_delete_callback(sender, instance, **kwargs):
     """
-    Emit the `unlink_binary` signal to perform extra
-    work before removing if required by backend.
+    Emits the `unlink_binary` signal to perform extra
+    work before removing the attached file if required by backend.
     """
     unlink_binary.send(sender=Attachment, instance=instance)
     post_unlink.send(sender=Attachment, instance=instance)
@@ -229,9 +229,9 @@ def post_delete_callback(sender, instance, **kwargs):
     """
     The FileStorage backend does not remove files when the
     reference is deleted, to avvoid data loss.
-    If settings.FORCE_FILE_REMOVAL = True, delete the file
-    from disk, else rename the file to <filename.ext>_removed
-    to indicate that this file is removed from the database.
+    If settings.FORCE_FILE_RENAME = True, rename the file
+    to <filename.ext>_removed to indicate that this file is
+    removed from the database.
     """
     if instance.backend == "FileSystemStorage":
         rename = getattr(settings, "FORCE_FILE_RENAME", False)

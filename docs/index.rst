@@ -1,25 +1,19 @@
-.. _contents:
+.. _index:
 
 ========================
 Welcome to django-files!
 ========================
 
 Thanks for checking out django-files.
-This project aims to be an easy, portable, pluggable and maintainable attachment framework for Django.
+This :doc:`project<about>` aims to be an easy, portable, pluggable and maintainable attachments framework for Django.
 
 
-.. toctree:
-    :hidden:
-
-    index
-    
+See the :doc:`detailed table of contents <contents>` for specific information.
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
-    intro/about
- 
-
+    usage/basic
 
 Installation
 ============
@@ -36,7 +30,7 @@ This will install django-files in your PYTHONPATH.
 
 .. note::
 
-    If you are using virtualenv, remember to activate your environment before running the setup script. If you are not, why not? You really should =)
+    If you are using virtualenv, remember to activate your environment before running the setup script.
 
 Configuration
 =============
@@ -55,9 +49,59 @@ After you have installed django-files in your PYTHONPATH, you need to add it to 
         ...
     )
 
-You will also need to enable the `django.contrib.auth`, `django.contrib.contenttypes` and the `django.contrib.sites` apps, as they are used in the Attachment model.
+You will also need to enable the `django.contrib.auth`, `django.contrib.contenttypes` and the `django.contrib.sites` apps, as they are used in the :class:`~files.models.Attachment` class.
 
-.. autoclass:: files.models.Attachment
+
+Optional settings
+=================
+
+DEFAULT_FILE_STORAGE
+--------------------
+
+.. code-block:: python
+    
+    # Set the filesystem storage backend to use.
+    
+    DEFAULT_FILE_STORAGE = "files.storage.SQLiteStorage"
+
+This option set what kind of file storage backend you would like to use. If omitted, the default is `django.core.files.storage.FileSystemStorage`.
+
+Valid backends are:
+
+* django.core.files.storage.FileSystemStorage
+* files.storage.SQLiteStorage
+* files.storage.PostgreSQLStorage
+
+
+.. note::
+
+    The next two options has no effect if using a database storage backend, as the file is stored directly in the database and will be wiped away when the row is deleted.
+
+FORCE_FILE_RENAME
+-----------------
+
+.. code-block:: python
+
+    # If using the FileSystemStorage, setting this to True will
+    # append a FORCE_FILE_RENAME_POSTFIX postfix on files in the filesystem which
+    # has had their database reference deleted. Has no effect on
+    # database storage backends. 
+    
+    FORCE_FILE_RENAME = True
+
+
+FORCE_FILE_RENAME_POSTFIX
+-------------------------
+
+.. code-block:: python
+    
+    # Set this to whatever you want your removed files to be
+    # appended with. Defaults to "_removed". This setting has no
+    # effect on the database storage backends, as they are gently
+    # killed.
+    
+    FORCE_FILE_RENAME_POSTFIX = "_removed"
+
 
 
 Indices and tables

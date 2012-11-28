@@ -346,7 +346,7 @@ def get_attachment_form(parser, token):
     """
     Get a (new) form object to upload a new attachment.
 
-    Syntax::
+    Example usage::
 
         {% get_attachment_form for [object] as [varname] %}
         {% get_attachment_form for [app].[model] [object_id] as [varname] %}

@@ -16,12 +16,7 @@
         {% for shape in shapes %}
         <div class="grid_6">
             <h3>{{ shape }} context</h3>
-            <p class="note">
-                This context contains an object `shape` returned from the view.
-                The following code is rendered with the following tag:
-                <br />
-                {% templatetag openblock %} get_attachment_count for shape as attachment_count {% templatetag closeblock %}
-            </p>
+           
             <ul>
                 <li>
                     {% get_attachment_count for shape as attachment_count %}

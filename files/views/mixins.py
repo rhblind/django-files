@@ -9,11 +9,11 @@ class PermissionsRequiredMixin(object):
     View mixin which verifies that the logged in user has the specified
     permissions.
 
-    Settings:
+    Settings::
 
-    `required_permissions` - list/tuple of required permissions
+        `required_permissions` - list/tuple of required permissions
 
-    Example Usage:
+    Example Usage::
 
         class SomeView(PermissionsRequiredMixin, ListView):
             ...

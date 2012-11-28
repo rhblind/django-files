@@ -36,7 +36,7 @@ If you have ever used the `Comments framework`_ in Django, this should be quite 
         {% load attachments %}
 
 
-Say we have a view rendering a template with a `shapes` queryset in the context.
+Say we have a view rendering a template with a single `shape` object context variable.
 
 
 Adding attachments
@@ -51,14 +51,12 @@ Adding attachments
     {% load attachments %}
 
     <div>
-        {% for shape in shapes %}
 
-            {% render_attachment_form for shape %}
+        {% render_attachment_form for shape %}
         
-        {% endfor %}
     </div>
 
-As in the `Comments framework`_ this will render a upload form directly into the context.
+As in the `Comments framework`_ this will render an upload form directly into the context.
 Or, alternatively, if you wish to render your form fields independently:
 
 :py:meth:`files.templatetags.attachments.get_attachment_form`
@@ -92,49 +90,6 @@ The form template will search a number of location for a template, and return th
 |more| See :ref:`templates` for more info how to customize your templates.
 
 
-Editing attachments
--------------------
-
-The edit form works in the same manners as the create form, with both a method for rendering the form directly into the context, or to store the form in a context variable and manually render the individual fields of the form.
-
-:py:meth:`files.templatetags.attachments.render_attachment_editform`
-
-.. code-block:: html+django
-
-    <h1>Render the edit form</h1>
-
-    {% load attachments %}
-
-    <div>
-        {% for shape in shapes %}
-
-            {% render_attachment_editform for shape %}
-        
-        {% endfor %}
-    </div>
-
-
-:py:meth:`files.templatetags.attachments.get_attachment_editform`
-
-.. code-block:: html+django
-        
-    {% get_attachment_editform for shape as form %}
-
-    <form action="{{ attachment_edit_url }}" method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {% for field in form %}
-            
-            {{ field }}
-
-        {% endfor %}
-
-        <input type="submit" name="submit" value="{% trans "Save changes" %}" />
-    </form>
-
-.. attention::
-    When editing an existing attachment, a special variable `{{ attachment_edit_url }}` will be
-    inserted into the context dictionary in the template tag's render() method.
-
 Listing attachments
 -------------------
 
@@ -154,11 +109,114 @@ Or get the list as a context variable
 
     {% get_attachment_list for shape as attachment_list %}
 
-    {% for item in attachment_list %}
+    {% for attachment in attachment_list %}
 
-        {{ item }}
+        {{ attachment }}
 
     {% endfor %}
+
+
+
+Editing attachments
+-------------------
+
+The edit form works in the same manners as the create form, with both a method for rendering the form directly into the context, or to store the form in a context variable and manually render the individual fields of the form.
+
+:py:meth:`files.templatetags.attachments.render_attachment_editform`
+
+.. code-block:: html+django
+
+    <h1>Render the edit form</h1>
+
+    {% load attachments %}
+
+    <div>
+
+        {% get_attachment_list for shape as attachment_list %}
+
+            {% for attachment in attachment_list %}
+
+                {% render_attachment_editform for attachment %}
+
+            {% endfor %}
+        
+    </div>
+
+
+:py:meth:`files.templatetags.attachments.get_attachment_editform`
+
+.. code-block:: html+django
+        
+    {% get_attachment_editform for attachment as form %}
+
+    <form action="{% get_edit_url attachment %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% for field in form %}
+            
+            {{ field }}
+
+        {% endfor %}
+
+        <input type="submit" name="submit" value="{% trans "Save changes" %}" />
+    </form>
+
+.. attention::
+    When rendering the edit form manually, you must use the :py:meth:`~files.templatetags.attachments.get_edit_url` tag as the form action. When the form is rendered with the :py:meth:`~files.templatetags.attachments.render_attachment_editform` tag, this is automatically inserted behind the scenes with a special variable `{{ attachment_edit_url }}`.
+
+
+Counting attachments
+--------------------
+
+Get a count of related attachments to some object.
+
+:py:meth:`files.templatetags.attachments.get_attachment_count`
+
+.. code-block:: html+django
+    
+    {% get_attachment_count for shape as attachment_count %}
+
+    {{ shape }} has got {{ attachment_count }} attachments.
+
+
+
+
+
+Retrieving URL's
+================
+
+The follwing tags are available for resolvin URL's for attachments.
+
+
+View attachment details URL
+---------------------------
+
+:py:meth:`files.templatetags.attachments.get_view_url`
+
+Reverse the named URL `view-attachment`, which calls the :class:`~files.views.AttachmentDetailView`
+
+
+Edit attachment URL
+-------------------
+
+:py:meth:`files.templatetags.attachments.get_edit_url`
+
+Reverse the named URL `edit-attachment`, which calls the :class:`~files.views.AttachmentEditView`
+
+
+Delete attachment URL
+---------------------
+
+:py:meth:`files.templatetags.attachments.get_delete_url`
+
+Reverse the named URL `delete-attachment`, which calls the :class:`~files.views.AttachmentDeleteView`
+
+
+Download attachment URL
+-----------------------
+
+:py:meth:`files.templatetags.attachments.get_download_url`
+
+Reverse the named URL `download-attachment`, which calls the :class:`~files.views.AttachmentDownloadView`
 
 
 .. _Comments framework: https://docs.djangoproject.com/en/dev/ref/contrib/comments/

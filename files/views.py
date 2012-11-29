@@ -6,9 +6,9 @@ from django.conf import settings
 from django.shortcuts import render_to_response
 from django.contrib.contenttypes.models import ContentType
 from django.template.context import RequestContext
-from django.template.loader import render_to_string, select_template
-from django.http import HttpResponse, HttpResponseBadRequest,\
-    HttpResponseRedirect
+from django.template.loader import select_template
+from django.http import HttpResponse, HttpResponseRedirect
+from django.core.exceptions import ValidationError
 from django.views.generic.detail import DetailView, SingleObjectMixin,\
     BaseDetailView
 from django.views.generic.edit import DeleteView, CreateView, UpdateView
@@ -20,18 +20,6 @@ from files import get_form
 from files.models import Attachment
 
 
-class AttachmentPostBadRequest(HttpResponseBadRequest):
-    """
-    Response returned when an attachment post is invalid. If ``DEBUG`` is on a
-    nice-ish error message will be displayed (for debugging purposes), but in
-    production mode a simple opaque 400 page will be displayed.
-    """
-    def __init__(self, why):
-        super(AttachmentPostBadRequest, self).__init__()
-        if settings.DEBUG:
-            self.content = render_to_string("attachments/400-debug.html", {"why": why})
-
-
 class AttachmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     """
     View responsible for creating new attachments.
@@ -41,19 +29,28 @@ class AttachmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateVi
     form_class = get_form()
     template_name = "attachments/form.html"
     permission_required = "files.add_attachment"
-
+    
     def get_form(self, form_class):
-        # FIXME: This code is a complete disaster!
         kwargs = self.get_form_kwargs()
         try:
             data = kwargs["data"]
-            ctype_pk, object_pk = data["content_type"], data["object_id"]
-            ctype = ContentType.objects.get_for_id(ctype_pk)
-            obj = ctype.get_object_for_this_type(pk=object_pk)
-        except KeyError, e:
-            # FIXME: Does not work!
-            return AttachmentPostBadRequest(e.args[0])
-        return form_class(obj, **kwargs)
+            ctype_pk, object_pk = data.get("content_type"), data.get("object_id")
+            if ctype_pk is None or object_pk is None:
+                raise AttributeError("Missing content_type or object_id field.")
+            
+            model = ContentType.objects.get_for_id(ctype_pk)
+            target = model.get_object_for_this_type(pk=object_pk)
+        except AttributeError:
+            raise AttributeError("The given content-type id %d does not resolve to a model." % ctype_pk)
+        except ContentType.DoesNotExist:
+            raise ContentType.DoesNotExist("No matching content-type id and object id exists." % (ctype_pk, object_pk))
+        except (ValueError, ValidationError), e:
+            raise e("Attempting to get content-type %d and object %d raised %s",
+                    (ctype_pk, object_pk, e.__class__.__name__))
+        except Exception, e:
+            raise e
+        
+        return form_class(target, **kwargs)
     
     def form_valid(self, form):
         # Set some additional attributes from request.

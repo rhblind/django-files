@@ -27,8 +27,8 @@ DEFAULT_FILE_STORAGE = "files.storage.SQLiteStorage"
 
 # If this is set to True, users are required to be
 # authenticated in addition to be have the "files.download_attachment"
-# permission to be able to download files.
-REQUIRE_AUTH_DOWNLOAD = True
+# permission to be able to download files. Default is False.
+REQUIRE_AUTH_DOWNLOAD = False
 
 # If using the FileSystemStorage, setting this to True will
 # append a FORCE_FILE_RENAME_POSTFIX postfix on files in the filesystem which

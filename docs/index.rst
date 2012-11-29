@@ -80,7 +80,7 @@ REQUIRE_AUTH_DOWNLOAD
 
     # If this is set to True, users are required to be
     # authenticated in addition to be have the "files.download_attachment"
-    # permission to be able to download files.
+    # permission to be able to download files. Default is False.
 
     REQUIRE_AUTH_DOWNLOAD = True
 

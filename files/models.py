@@ -116,7 +116,8 @@ class Attachment(BaseAttachmentAbstractModel):
     class Meta:
         ordering = ("created", "modified")
         permissions = (
-            ("delete_other_attachment", "Can delete other attachment"),
+            ("delete_all_attachment", "Can delete all attachment"),
+            ("download_attachment", "Can download attachment"),
         )
         
     def __unicode__(self):

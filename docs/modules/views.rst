@@ -1,7 +1,7 @@
 Views
 =====
 
-__init__.py
+views.py
 -----------
 
 This is the home for the basic CRUD which is included in django-files.
@@ -10,10 +10,4 @@ These views provide basic functionalities like adding new attachments, editing e
 
 .. automodule:: files.views
     :members:
-
-.. automodule:: files.views.mixins
-    :members:
-
-
-
 

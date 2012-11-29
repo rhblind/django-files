@@ -13,6 +13,9 @@ from django.views.generic.detail import DetailView, SingleObjectMixin,\
     BaseDetailView
 from django.views.generic.edit import DeleteView, CreateView, UpdateView
 
+from braces.views import LoginRequiredMixin, PermissionRequiredMixin,\
+    MultiplePermissionsRequiredMixin
+
 from files import get_form
 from files.models import Attachment
 
@@ -29,7 +32,7 @@ class AttachmentPostBadRequest(HttpResponseBadRequest):
             self.content = render_to_string("attachments/400-debug.html", {"why": why})
 
 
-class AttachmentCreateView(CreateView):
+class AttachmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     """
     View responsible for creating new attachments.
     """
@@ -37,9 +40,10 @@ class AttachmentCreateView(CreateView):
     context_object_name = "attachment"
     form_class = get_form()
     template_name = "attachments/form.html"
+    permission_required = "files.add_attachment"
 
     def get_form(self, form_class):
-        # TODO: Better way to fetch object
+        # FIXME: This code is a complete disaster!
         kwargs = self.get_form_kwargs()
         try:
             data = kwargs["data"]
@@ -58,13 +62,14 @@ class AttachmentCreateView(CreateView):
         return super(AttachmentCreateView, self).form_valid(form)
     
 
-class AttachmentEditView(UpdateView):
+class AttachmentEditView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     """
     Updates an existing attachment with new data.
     """
     model = Attachment
     context_object_name = "attachment"
     form_class = get_form()
+    permission_required = "files.change_attachment"
     
     def get_form(self, form_class):
         obj = self.object.content_type \
@@ -94,12 +99,25 @@ class AttachmentDetailView(DetailView):
     template_name = "attachments/view.html"
     
 
-class AttachmentDeleteView(DeleteView):
+class AttachmentDeleteView(LoginRequiredMixin, MultiplePermissionsRequiredMixin, DeleteView):
     """
     Deletes an attachment from the storage backend.
     """
     model = Attachment
     context_object_name = "attachment"
+    permissions = {
+        "all": ("files.delete_attachment",)
+    }
+    
+    def dispatch(self, request, *args, **kwargs):
+        self.kwargs = kwargs
+        obj = self.get_object()
+        if not request.user == obj.creator:
+            # If attachment is not created by the user who tries
+            # to delete it, the user need to have the "delete_all_attachment"
+            # permission.
+            self.permissions["all"] = ("files.delete_attachment", "files.delete_all_attachment")
+        return super(AttachmentDeleteView, self).dispatch(request, *args, **kwargs)
     
     def get_template_names(self):
         """
@@ -139,15 +157,26 @@ class AttachmentDeleteView(DeleteView):
             return render_to_response(template.name, self.get_context_data(), RequestContext(request))
     
     
-class AttachmentDownloadView(BaseDetailView, SingleObjectMixin):
+class AttachmentDownloadView(LoginRequiredMixin, PermissionRequiredMixin, BaseDetailView, SingleObjectMixin):
     """
     Returns the attachment file as a HttpResponse.
     """
     model = Attachment
     context_object_name = "attachment"
+    require_auth = getattr(settings, "REQUIRE_AUTH_DOWNLOAD", False)
+    
+    def dispatch(self, request, *args, **kwargs):
+        if self.require_auth is True:
+            # Set permission_required, and call the
+            # mixin dispatch methods
+            self.permission_required = "files.download_attachment"
+            return super(AttachmentDownloadView, self).dispatch(request, *args, **kwargs)
+        else:
+            # Call the normal dispatch method
+            return super(BaseDetailView, self).dispatch(request, *args, **kwargs)
     
     def render_to_response(self, context):
-        obj = context["object"]
+        obj = context["attachment"]
         response = HttpResponse(obj.attachment.file.read(), mimetype=obj.mimetype)
         response["Content-Disposition"] = "inline; filename=%s" % obj.filename
         return response

@@ -73,10 +73,22 @@ Valid backends are:
 * files.storage.SQLiteStorage
 * files.storage.PostgreSQLStorage
 
+REQUIRE_AUTH_DOWNLOAD
+---------------------
 
-.. note::
+.. code-block:: python
+
+    # If this is set to True, users are required to be
+    # authenticated in addition to be have the "files.download_attachment"
+    # permission to be able to download files.
+
+    REQUIRE_AUTH_DOWNLOAD = True
+
+
+.. attention::
 
     The next two options has no effect if using a database storage backend, as the file is stored directly in the database and will be wiped away when the row is deleted.
+
 
 FORCE_FILE_RENAME
 -----------------

@@ -229,8 +229,7 @@ class RenderAttachmentEditFormNode(RenderAttachmentFormNode, AttachmentEditFormN
                 "attachments/edit_form.html"
             ]
             context.push()
-            formstr = render_to_string(template_search_list, {"form": self.get_form(context),
-                              "attachment_edit_url": files.get_edit_url(self.get_object(context))}, context)
+            formstr = render_to_string(template_search_list, {"form": self.get_form(context)}, context)
             context.pop()
             return formstr
         else:

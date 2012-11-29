@@ -84,6 +84,7 @@ class AttachmentInlines(generic.GenericStackedInline):
     like this.
     
     Syntax::
+    
         from files.admin import AttachmentInlines
     
         class MyModel(admin.ModelAdmin):

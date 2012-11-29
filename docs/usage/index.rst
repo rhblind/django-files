@@ -5,6 +5,7 @@ Basic usage index
     :maxdepth: 1
 
     basic
+    admin
     templates
 
 

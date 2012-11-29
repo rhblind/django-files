@@ -24,7 +24,24 @@
             {% get_attachment_list for shape as attachment_list%}
             <ul>
                 {% for attachment in attachment_list %}
+                {% comment %}
+                    {% get_attachment_editform for attachment as form %}
+                    
+                    <form action="{% get_edit_url attachment %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {% for field in form %}
+                    
+                            {{ field }}
+                    
+                        {% endfor %}
+                    
+                        <input type="submit" name="submit" value="{% trans "Save changes" %}" />
+                    </form>
+                {% endcomment %}
+
+                
                     <li>{% render_attachment_editform for attachment %}</li>
+                    
                 {% endfor %}
             </ul>
         </div>

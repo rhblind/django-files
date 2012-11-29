@@ -1,8 +1,8 @@
 .. _index:
 
-========================
-Welcome to django-files!
-========================
+======================================
+Welcome to django-files documentation!
+======================================
 
 Thanks for checking out django-files.
 This :doc:`project<about>` aims to be an easy, portable, pluggable and maintainable attachments framework for Django.
@@ -13,6 +13,7 @@ See the :doc:`detailed table of contents <contents>` for specific information.
 .. toctree::
     :maxdepth: 1
 
+    about
     usage/basic
 
 Installation

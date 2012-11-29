@@ -4,6 +4,13 @@ Basic usage
 If you have downloaded the git version, you will see that it includes a demosite app, which demonstrates the use of django-files. In the demosite we have a model called `Shape` which we will use through this documentation as the object we relate our attachments to.
 
 
+.. toctree::
+    :hidden:
+
+    admin
+    templates
+
+
 The `demosite/models.py` file
 
 .. literalinclude:: ../../demosite/models.py
@@ -87,7 +94,7 @@ In which case you will need to provide the rest of the `<form>` as well as
 
 The form template will search a number of location for a template, and return the first that match, so that you can easily override the default template.
 
-|more| See :ref:`templates` for more info how to customize your templates.
+|info| See :ref:`templates` for more info how to customize your templates.
 
 
 Listing attachments
@@ -161,7 +168,7 @@ The edit form works in the same manners as the create form, with both a method f
     </form>
 
 .. attention::
-    When rendering the edit form manually, you must use the :py:meth:`~files.templatetags.attachments.get_edit_url` tag as the form action. When the form is rendered with the :py:meth:`~files.templatetags.attachments.render_attachment_editform` tag, this is automatically inserted behind the scenes with a special variable `{{ attachment_edit_url }}`.
+    When rendering the edit form manually, you must use the :py:meth:`~files.templatetags.attachments.get_edit_url` tag as the form action.
 
 
 Counting attachments
@@ -221,6 +228,6 @@ Reverse the named URL `download-attachment`, which calls the :class:`~files.view
 
 .. _Comments framework: https://docs.djangoproject.com/en/dev/ref/contrib/comments/
 
-.. |more| image:: ../images/info.png
+.. |info| image:: ../info.png
     :align: middle
     :alt: more info

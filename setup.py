@@ -13,6 +13,10 @@ setup(
     author = "Rolf Håvard Blindheim",
     author_email = "rhblind@gmail.com",
     url = "https://github.com/rhblind/django-files",
+    install_requires = [
+        "django",
+        "django-braces"
+    ],
     packages = [
         "files",
         "files.management",

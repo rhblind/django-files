@@ -88,7 +88,7 @@ Or, alternatively, if you wish to render your form fields independently:
 In which case you will need to provide the rest of the `<form>` as well as 
 `<submit />` buttons yourself.
 
-.. tip::
+.. note::
     :py:meth:`~files.templatetags.attachments.get_create_target` can be used to retrieve the
     url for the view which should accept the POST request.
 

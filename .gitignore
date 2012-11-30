@@ -18,3 +18,4 @@ _svn
 .settings
 demosite/media/attachments/*
 docs/_build/*
+dist/*

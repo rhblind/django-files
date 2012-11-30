@@ -88,9 +88,11 @@ Or, alternatively, if you wish to render your form fields independently:
 In which case you will need to provide the rest of the `<form>` as well as 
 `<submit />` buttons yourself.
 
-.. note::
+.. tip::
+
     :py:meth:`~files.templatetags.attachments.get_create_target` can be used to retrieve the
     url for the view which should accept the POST request.
+    
 
 The form template will search a number of location for a template, and return the first that match, so that you can easily override the default template.
 

@@ -70,12 +70,12 @@ def get_form():
         return AttachmentForm
 
 
-def get_form_target():
+def get_create_target():
     """
     Returns the target URL for the attachment form submission view
     """
-    if get_storage_backend_name() not in CONTRIB_BACKENDS and hasattr(get_storage_backend(), "get_form_target"):
-        return get_storage_backend().get_form_target()
+    if get_storage_backend_name() not in CONTRIB_BACKENDS and hasattr(get_storage_backend(), "get_create_target"):
+        return get_storage_backend().get_create_target()
     else:
         return urlresolvers.reverse("add-attachment")
 

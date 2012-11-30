@@ -73,7 +73,7 @@ Or, alternatively, if you wish to render your form fields independently:
         
     {% get_attachment_form for shape as form %}
 
-    <form action="{% attachment_form_target %}" method="post" enctype="multipart/form-data">
+    <form action="{% get_create_target %}" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {% for field in form %}
             
@@ -89,7 +89,7 @@ In which case you will need to provide the rest of the `<form>` as well as
 `<submit />` buttons yourself.
 
 .. tip::
-    :py:meth:`~files.templatetags.attachments.attachment_form_target` can be used to retrieve the
+    :py:meth:`~files.templatetags.attachments.get_create_target` can be used to retrieve the
     url for the view which should accept the POST request.
 
 The form template will search a number of location for a template, and return the first that match, so that you can easily override the default template.
@@ -156,7 +156,7 @@ The edit form works in the same manners as the create form, with both a method f
         
     {% get_attachment_editform for attachment as form %}
 
-    <form action="{% get_edit_url attachment %}" method="post" enctype="multipart/form-data">
+    <form action="{% get_edit_target attachment %}" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {% for field in form %}
             
@@ -168,7 +168,8 @@ The edit form works in the same manners as the create form, with both a method f
     </form>
 
 .. attention::
-    When rendering the edit form manually, you must use the :py:meth:`~files.templatetags.attachments.get_edit_url` tag as the form action.
+    When rendering the edit form manually, you must use the :py:meth:`~files.templatetags.attachments.get_edit_target` or the :py:meth:`~files.templatetags.attachments.get_edit_url` tag as the form action 
+    (They calls the same method, so either is fine).
 
 
 Counting attachments
@@ -193,11 +194,22 @@ Retrieving URL's
 
 The follwing tags are available for resolvin URL's for attachments.
 
+Create attachment URL
+---------------------
+
+:py:meth:`files.templatetags.attachments.get_create_target`
+
+**Takes no arguments.**
+
+Reverse the named URL `view-attachment`, which calls the :class:`~files.views.AttachmentCreateView`
+
 
 View attachment details URL
 ---------------------------
 
 :py:meth:`files.templatetags.attachments.get_view_url`
+
+**Requires an attachment** `slug` **argument.**
 
 Reverse the named URL `view-attachment`, which calls the :class:`~files.views.AttachmentDetailView`
 
@@ -206,6 +218,9 @@ Edit attachment URL
 -------------------
 
 :py:meth:`files.templatetags.attachments.get_edit_url`
+:py:meth:`files.templatetags.attachments.get_edit_target`
+
+**Requires an attachment** `slug` **argument.**
 
 Reverse the named URL `edit-attachment`, which calls the :class:`~files.views.AttachmentEditView`
 
@@ -215,6 +230,8 @@ Delete attachment URL
 
 :py:meth:`files.templatetags.attachments.get_delete_url`
 
+**Requires an attachment** `slug` **argument.**
+
 Reverse the named URL `delete-attachment`, which calls the :class:`~files.views.AttachmentDeleteView`
 
 
@@ -222,6 +239,8 @@ Download attachment URL
 -----------------------
 
 :py:meth:`files.templatetags.attachments.get_download_url`
+
+**Requires an attachment** `slug` **argument.**
 
 Reverse the named URL `download-attachment`, which calls the :class:`~files.views.AttachmentDownloadView`
 

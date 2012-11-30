@@ -281,18 +281,6 @@ class RenderAttachmentListNode(AttachmentListNode):
             return ""
 
 
-@register.simple_tag
-def attachment_form_target():
-    """
-    Get the target URL for the attachment form.
-
-    Example::
-
-        <form action="{% attachment_form_target %}" method="post">
-    """
-    return files.get_form_target()
-
-
 @register.tag
 def render_attachment_list(parser, token):
     """
@@ -409,6 +397,32 @@ def get_attachment_list(parser, token):
 
     """
     return AttachmentListNode.handle_token(parser, token)
+
+
+@register.simple_tag
+def get_create_target():
+    """
+    Get the target URL for the attachment form.
+
+    Example::
+
+        <form action="{% get_create_target %}" method="post">
+    """
+    return files.get_create_target()
+
+
+@register.simple_tag
+def get_edit_target(attachment):
+    """
+    Get the edit URL for an attachment.
+
+    Example::
+
+        <a href="{% get_edit_target attachment %}">edit</a>
+    """
+    # This is just a helper method which calls the
+    # get_edit_url for the attachment.
+    return files.get_edit_url(attachment)
 
 
 @register.simple_tag

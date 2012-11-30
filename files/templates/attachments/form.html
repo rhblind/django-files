@@ -5,7 +5,7 @@
 
 {% block content %}
     {% load attachments %}
-    <form action="{% attachment_form_target %}" method="post" enctype="multipart/form-data" >{% csrf_token %}
+    <form action="{% get_create_target %}" method="post" enctype="multipart/form-data" >{% csrf_token %}
     {% if next %}<div><input type="hidden" name="next" value="{{ next }}" /></div>{% endif %}
     {% if form.errors %}
         <h1>{% blocktrans count counter=form.errors|length %}Please correct the error below{% plural %}Please correct the errors below{% endblocktrans %}</h1>

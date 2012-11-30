@@ -42,6 +42,14 @@ REQUIRE_AUTH_DOWNLOAD = False
 # killed.
 #FORCE_FILE_RENAME_POSTFIX = "_removed"
 
+# Set the max allowed file size (in bytes) for attachments.
+# If not set, no file size restrictions will be enforced.
+# Note that this check will be performed after the file has
+# been uploaded into the memory. Please make sure to protect your
+# web server by setting (i.e. LimitRequestBody) to prevent uploading
+# big files in memory.
+#ATTACHMENT_MAX_SIZE = 1024  # 4 MB
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.

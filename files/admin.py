@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from django import forms
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.contenttypes import generic
 from django.utils.translation import ugettext_lazy as _, ungettext
@@ -7,11 +9,29 @@ from django.utils.translation import ugettext_lazy as _, ungettext
 from files.models import Attachment
 
 
+class AttachmentAdminForm(forms.ModelForm):
+    
+    class Meta:
+        model = Attachment
+        
+    def clean_attachment(self):
+        """
+        Make sure the attachment file size is allowed.
+        """
+        attachment = self.cleaned_data["attachment"]
+        max_size = getattr(settings, "ATTACHMENT_MAX_SIZE", None)
+        if max_size and attachment.size > max_size:
+            raise forms.ValidationError(_("File is too large! " \
+                  "Please keep attachment size under %d bytes." % max_size))
+        return attachment
+
+
 class AttachmentAdmin(admin.ModelAdmin):
     """
     The default form used for the attachment model in the
     admin interface.
     """
+    form = AttachmentAdminForm
     readonly_fields = ("mimetype", "slug", "size", "checksum", "ip_address",
                        "backend", "created", "modified")
     fieldsets = [
@@ -94,6 +114,7 @@ class AttachmentInlines(generic.GenericStackedInline):
             
     """
     model = Attachment
+    form = AttachmentAdminForm
     readonly_fields = ("mimetype", "slug", "size", "checksum", "ip_address", "backend",
                        "created", "modified")
     fieldsets = [

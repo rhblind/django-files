@@ -2,6 +2,7 @@
 
 import time
 from django import forms
+from django.conf import settings
 from django.forms.util import ErrorDict
 from django.utils.crypto import salted_hmac, constant_time_compare
 from django.utils.translation import ugettext_lazy as _
@@ -102,6 +103,17 @@ class AttachmentForm(forms.ModelForm):
             raise forms.ValidationError("Security hash dict failed.")
         return actual
     
+    def clean_attachment(self):
+        """
+        Make sure the attachment file size is allowed.
+        """
+        attachment = self.cleaned_data["attachment"]
+        max_size = getattr(settings, "ATTACHMENT_MAX_SIZE", None)
+        if max_size and attachment.size > max_size:
+            raise forms.ValidationError(_("File is too large! " \
+                  "Please keep attachment size under %d bytes." % max_size))
+        return attachment
+        
     def clean_timestamp(self):
         """
         Make sure the timestamp is not too far (> 2 hours) in the past.

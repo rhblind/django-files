@@ -129,6 +129,19 @@ FORCE_FILE_RENAME_POSTFIX
     FORCE_FILE_RENAME_POSTFIX = "_removed"
 
 
+ATTACHMENT_MAX_SIZE
+-------------------
+
+.. code-block:: python
+
+    # Set the max allowed file size (in bytes) for attachments.
+    # If not set, no file size restrictions will be enforced.
+    # Note that this check will be performed after the file has
+    # been uploaded into the memory. Please make sure to protect your
+    # web server by setting (i.e. LimitRequestBody) to prevent uploading
+    # big files in memory.
+    
+    ATTACHMENT_MAX_SIZE = 4194304  # 4 MB
 
 Indices and tables
 ==================

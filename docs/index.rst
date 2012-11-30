@@ -19,7 +19,20 @@ See the :doc:`detailed table of contents <contents>` for specific information.
 Installation
 ============
 
-I have not yet been able to package django-files for pypi, so installation needs to be done by cloning from github. This is luckily a pretty painless process and can be done by following these steps.
+From the Python package index (pypi)
+------------------------------------
+
+.. code-block:: none
+
+    $ pip install django-files
+
+    OR
+
+    $ easy_install django-files
+    
+
+From Git
+--------
 
 .. code-block:: none
 

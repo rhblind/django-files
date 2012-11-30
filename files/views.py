@@ -4,14 +4,14 @@ from __future__ import absolute_import
 
 from django.conf import settings
 from django.shortcuts import render_to_response
-from django.contrib.contenttypes.models import ContentType
 from django.template.context import RequestContext
 from django.template.loader import select_template
 from django.http import HttpResponse, HttpResponseRedirect
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
+from django.views.generic.edit import DeleteView, CreateView, UpdateView
 from django.views.generic.detail import DetailView, SingleObjectMixin,\
     BaseDetailView
-from django.views.generic.edit import DeleteView, CreateView, UpdateView
 
 from braces.views import LoginRequiredMixin, PermissionRequiredMixin,\
     MultiplePermissionsRequiredMixin

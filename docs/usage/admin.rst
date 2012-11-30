@@ -1,3 +1,4 @@
+===============
 Admin interface
 ===============
 
@@ -6,7 +7,7 @@ The django-files app comes with two pre-configured classes for using in the admi
 
 
 AttachmentAdmin
----------------
+===============
 
 :class:`files.admin.AttachmentAdmin`
 
@@ -14,7 +15,7 @@ By enabling the admin `autodiscover`_ feature, this should automatically appear 
 
 
 AttachmentInlines
------------------
+=================
 
 :class:`files.admin.AttachmentInlines`
 
@@ -41,7 +42,28 @@ Take our Shape model from previous examples.
                    
     admin.site.register(Shape, ShapeAdmin)
 
+
+Permissions
+===========
+
+The user in question needs to be a `staff`_ member to be able to log into the `admin interface`_.
+
+In addition, the following conditions must be met.
+
+* Add a new attachment 
+    * The loggin in user needs to have the `files.add_attachment` permission.
+* Delete
+    * The logged in user needs to have `superuser`_ status.
+* Change
+    * The loggine in user needs to have `files.change_attachment` permission. 
+
+
+
+
+
 .. _admin interface: https://docs.djangoproject.com/en/dev/ref/contrib/admin/#modeladmin-objects
 .. _autodiscover: https://docs.djangoproject.com/en/dev/ref/contrib/admin/#hooking-adminsite-instances-into-your-urlconf
 .. _ModelAdmin: https://docs.djangoproject.com/en/dev/ref/contrib/admin/#modeladmin-objects
 .. _GenericStackedInline: https://docs.djangoproject.com/en/dev/ref/contrib/contenttypes/#generic-relations-in-forms-and-admin
+.. _superuser: https://docs.djangoproject.com/en/dev/topics/auth/#django.contrib.auth.models.User.is_superuser
+.. _staff: https://docs.djangoproject.com/en/dev/topics/auth/#django.contrib.auth.models.User.is_staff

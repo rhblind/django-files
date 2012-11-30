@@ -1,0 +1,3 @@
+recursive-include files/templates *.html
+include README.md
+include LICENSE.md

@@ -116,7 +116,8 @@ class Attachment(BaseAttachmentAbstractModel):
     class Meta:
         ordering = ("created", "modified")
         permissions = (
-            ("delete_all_attachment", "Can delete all attachment"),
+            ("change_all_attachment", "Can change all attachments"),
+            ("delete_all_attachment", "Can delete all attachments"),
             ("download_attachment", "Can download attachment"),
         )
         

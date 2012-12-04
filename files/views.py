@@ -161,6 +161,8 @@ class AttachmentDownloadView(LoginRequiredMixin, PermissionRequiredMixin, BaseDe
     model = Attachment
     context_object_name = "attachment"
     require_auth = getattr(settings, "REQUIRE_AUTH_DOWNLOAD", False)
+    raise_exception = True  # If user is not allowed to download the file,
+                            # return a HttpResponseForbidden response
     
     def dispatch(self, request, *args, **kwargs):
         if self.require_auth is True:

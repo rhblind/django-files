@@ -162,7 +162,14 @@ class AttachmentEditFormNode(AttachmentFormNode):
     """
     Insert a form for the attachment model instance into the context
     """
-       
+    
+    def get_target_ctype_pk(self, context):
+        try:
+            obj = self.object_expr.resolve(context)
+        except template.VariableDoesNotExist:
+            return None, None
+        return obj.content_type, obj.pk
+    
     def get_form(self, context):
         obj = self.get_object(context)
         if obj:

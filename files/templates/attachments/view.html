@@ -10,7 +10,7 @@
         <h3>{{ attachment.filename }}</h3>
     </dt>
     <dd>{% trans "Description" %}: {{ attachment.description }}</dd>
-    <dd>{%trans "File size" %}: {{ attachment.size|filesizeformat }}</dd>
+    <dd>{% trans "File size" %}: {{ attachment.size|filesizeformat }}</dd>
     <dd>{% trans "Mimetype" %}: {{ attachment.mimetype }}</dd>
     <dd>{% trans "Storage backend" %}: {{ attachment.backend }}</dd>
     <dd>{% trans "Is public" %}: {{ attachment.is_public }}</dd>

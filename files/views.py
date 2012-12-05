@@ -59,14 +59,18 @@ class AttachmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateVi
         return super(AttachmentCreateView, self).form_valid(form)
     
 
-class AttachmentEditView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class AttachmentEditView(LoginRequiredMixin, MultiplePermissionsRequiredMixin, UpdateView):
     """
     Updates an existing attachment with new data.
     """
     model = Attachment
     context_object_name = "attachment"
     form_class = get_form()
-    permission_required = "files.change_attachment"
+    permissions = {
+        "any": ("files.change_attachment", "files.can_moderate")
+    }
+    raise_exception = True  # If user is not allowed to edit the attachment,
+                            # return a HttpResponseForbidden response
     
     def get_form(self, form_class):
         obj = self.object.content_type \

@@ -124,7 +124,7 @@ class AttachmentDeleteView(LoginRequiredMixin, MultiplePermissionsRequiredMixin,
     permissions = {
         "all": ("files.delete_attachment",)
     }
-    raise_exception = True  # If user is not allowed to edit the attachment,
+    raise_exception = True  # If user is not allowed to delete the attachment,
                             # return a HttpResponseForbidden response
     
     def dispatch(self, request, *args, **kwargs):

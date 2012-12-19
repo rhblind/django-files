@@ -64,7 +64,7 @@ class AttachmentAdmin(admin.ModelAdmin):
             if "set_is_public" in actions:
                 actions.pop("set_is_public")
             if "set_is_private" in actions:
-                actions.pop("set_is_public")
+                actions.pop("set_is_private")
         return actions
     
     def set_is_public(self, request, queryset):

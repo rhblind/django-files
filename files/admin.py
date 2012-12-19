@@ -42,8 +42,15 @@ class AttachmentAdmin(admin.ModelAdmin):
     ]
     list_display = ("attachment", "mimetype", "content_type", "object_id", "is_public",
                     "backend", "created", "ip_address", "site")
+    list_filter = ("mimetype", "is_public", "site__domain", "content_type")
     ordering = ("-created", "content_type")
     actions = ["set_is_public", "set_is_private"]
+    
+    class Media:
+        css = {
+            "all": ("css/foldable-list-filter.css",)
+        }
+        js = ("javascripts/foldable-list-filter.js",)
     
     def save_model(self, request, obj, form, change):
         if not obj.pk:

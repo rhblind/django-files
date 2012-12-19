@@ -1,0 +1,15 @@
+#changelist-filter h3 {
+    cursor: pointer;
+    background: url("../images/foldable-list-filter.png") no-repeat scroll left -14px transparent;
+    padding-left: 16px;
+}
+
+#changelist-filter h3.closed {
+    background-position: -15px 0;
+}
+#changelist-filter h3.schrodinger {
+    background-position: 0 -41px !important;
+}
+#changelist-filter h3.closed + ul li:not(.selected) {
+    display: none;
+}

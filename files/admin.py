@@ -60,7 +60,7 @@ class AttachmentAdmin(admin.ModelAdmin):
         # the admin interface.
         if not request.user.is_superuser and "delete_selected" in actions:
             actions.pop("delete_selected")
-        if not request.user.has_perm("files.change_attachment"):
+        if not request.user.has_perm("files.can_moderate"):
             if "set_is_public" in actions:
                 actions.pop("set_is_public")
             if "set_is_private" in actions:

@@ -24,6 +24,9 @@ setup(
     ],
     package_data = {
         "files": [
+            "static/css/*.css",
+            "static/images/*.png",
+            "static/javascripts/*.js",
             "templates/attachments/*.html",
         ]
     },

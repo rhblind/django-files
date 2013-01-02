@@ -28,8 +28,8 @@ class AttachmentAdminForm(forms.ModelForm):
     
     def clean(self):
         cleaned_data = super(AttachmentAdminForm, self).clean()
-        ctype = cleaned_data["content_type"]
-        object_id = cleaned_data["object_id"]
+        ctype = cleaned_data.get("content_type", None)
+        object_id = cleaned_data.get("object_id", None)
         
         if ctype and object_id:
             # Resolve the generic relation to make sure

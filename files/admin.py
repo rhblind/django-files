@@ -42,7 +42,8 @@ class AttachmentAdmin(admin.ModelAdmin):
     ]
     list_display = ("attachment", "mimetype", "content_type", "object_id", "is_public",
                     "backend", "created", "ip_address", "site")
-    list_filter = ("mimetype", "is_public", "site__domain", "content_type")
+    list_filter = ("created", "mimetype", "is_public", "site__domain", "content_type")
+    date_hierarchy = "created"
     ordering = ("-created", "content_type")
     actions = ["set_is_public", "set_is_private"]
     

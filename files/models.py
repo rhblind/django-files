@@ -85,8 +85,8 @@ class BaseAttachmentAbstractModel(models.Model):
     ip_address = models.IPAddressField(_("IP address"), blank=True, null=True)
     is_public = models.BooleanField(_("is public"), default=True,
                     help_text=_("Uncheck to hide the attachment from other users"))
-    created = models.DateTimeField(_("created"), auto_now_add=True)
-    modified = models.DateTimeField(_("modified"), auto_now=True)
+    created = models.DateTimeField(_("date/time created"), auto_now_add=True)
+    modified = models.DateTimeField(_("date/time modified"), auto_now=True)
     
     class Meta:
         abstract = True

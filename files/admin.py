@@ -57,9 +57,10 @@ class AttachmentAdmin(admin.ModelAdmin):
         ("Object relations", {"fields": ("content_type", "object_id")}),
         ("Metadata", {"fields": ("mimetype", "size", "checksum", "created", "modified")})
     ]
-    list_display = ("attachment", "mimetype", "content_type", "object_id", "is_public",
-                    "backend", "created", "ip_address", "site")
+    list_display = ("attachment", "mimetype", "creator", "content_type", "object_id",
+                    "backend", "created", "ip_address", "site", "is_public")
     list_filter = ("created", "mimetype", "is_public", "site__domain", "content_type")
+    search_fields = ("attachment", "slug", "creator__username")
     date_hierarchy = "created"
     ordering = ("-created", "content_type")
     actions = ["set_is_public", "set_is_private"]

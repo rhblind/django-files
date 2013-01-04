@@ -10,6 +10,7 @@ import files
 
 from django import template
 from django.conf import settings
+from django.db.models import Q
 from django.utils.encoding import smart_unicode
 from django.template.loader import render_to_string
 from django.contrib.contenttypes.models import ContentType
@@ -91,7 +92,12 @@ class BaseAttachmentNode(template.Node):
         # model, filter on them.
         field_names = [f.name for f in self.attachment_model._meta.fields]
         if "is_public" in field_names:
-            qs = qs.filter(is_public=True)
+            # Filter public attachments only, but include users private.
+            q = Q(is_public=True)
+            user = context["user"]
+            if user.is_authenticated():
+                q = q | Q(creator=user)
+            qs = qs.filter(q)
         if "backend" in field_names:
             engine = str(get_storage_class().__name__)
             qs = qs.filter(backend=engine)

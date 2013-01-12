@@ -57,7 +57,7 @@ class BaseAttachmentNode(template.Node):
             app, model = token.split(".")
             return ContentType.objects.get_by_natural_key(app, model)
         except ValueError:
-            raise template.TemplateSyntaxError("Third argument in %r must be in the formate 'app.model'" % tagname)
+            raise template.TemplateSyntaxError("Third argument in %r must be in the format 'app.model'" % tagname)
         except ContentType.DoesNotExist:
             raise template.TemplateSyntaxError("%r tag has non-existant content-type: '%s.%s'" % (tagname, app, model))
         
@@ -73,14 +73,14 @@ class BaseAttachmentNode(template.Node):
         self.attachment = attachment
         
     def render(self, context):
-        qs = self.get_query_set(context)
+        qs = self.get_queryset(context)
         context[self.as_varname] = self.get_context_value_from_queryset(context, qs)
         return ""
     
-    def get_query_set(self, context):
+    def get_queryset(self, context):
         ctype, object_pk = self.get_target_ctype_pk(context)
         if not object_pk:
-            return  self.attachment_model.objects.none()
+            return self.attachment_model.objects.none()
         
         qs = self.attachment_model.objects.filter(
                 content_type=ctype,
@@ -283,7 +283,7 @@ class RenderAttachmentListNode(AttachmentListNode):
                 "attachments/%s/list.html" % ctype.model,
                 "attachments/list.html"
             ]
-            qs = self.get_query_set(context)
+            qs = self.get_queryset(context)
             context.push()
             liststr = render_to_string(template_search_list, {
                 "attachment_list": self.get_context_value_from_queryset(context, qs)

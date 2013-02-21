@@ -16,6 +16,7 @@ _svn
 .project
 .pydevproject
 .settings
+.idea
 demosite/media/attachments/*
 docs/_build/*
 dist/*

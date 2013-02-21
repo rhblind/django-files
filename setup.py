@@ -5,7 +5,7 @@ from distutils.core import setup
 
 setup(
     name = "django-files",
-    version = "1.0",
+    version = "1.1",
     description = "Django attachments ContentTypes micro framework.",
     long_description = "Attachments framework based on ContentTypes and the django.contrib.comments system.",
     keywords = "django file attachment upload storage",

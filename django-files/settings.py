@@ -48,7 +48,7 @@ REQUIRE_AUTH_DOWNLOAD = False
 # been uploaded into the memory. Please make sure to protect your
 # web server by setting (i.e. LimitRequestBody) to prevent uploading
 # big files in memory.
-#ATTACHMENT_MAX_SIZE = 1024  # 4 MB
+#ATTACHMENT_MAX_SIZE = 4096000  # 4 MB
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

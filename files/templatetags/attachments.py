@@ -4,7 +4,7 @@
 # framework template tags adapted to use with attachments.
 #
 
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
 import files
 
@@ -63,7 +63,8 @@ class BaseAttachmentNode(template.Node):
         
     def __init__(self, ctype=None, object_pk_expr=None, object_expr=None, as_varname=None, attachment=None):
         if ctype is None and object_expr is None:
-            raise template.TemplateSyntaxError("Attachment nodes must be given either a literal object or a ctype and object pk.")
+            raise template.TemplateSyntaxError(
+                "Attachment nodes must be given either a literal object or a ctype and object pk.")
         
         self.attachment_model = files.get_model()
         self.as_varname = as_varname
@@ -83,9 +84,7 @@ class BaseAttachmentNode(template.Node):
             return self.attachment_model.objects.none()
         
         qs = self.attachment_model.objects.filter(
-                content_type=ctype,
-                object_id=smart_unicode(object_pk),
-                site__pk=settings.SITE_ID)
+            content_type=ctype, object_id=smart_unicode(object_pk), site__pk=settings.SITE_ID)
         
         # The 'is_public' field and the 'backend' fields are implementation
         # details of the 'django-files' app. If present on the attachment
@@ -162,7 +161,22 @@ class AttachmentFormNode(BaseAttachmentNode):
     def render(self, context):
         context[self.as_varname] = self.get_form(context)
         return ""
-    
+
+
+# class AttachmentFormSetNode(BaseAttachmentNode):
+#     """
+#     Insert a formset for the attachment model into context
+#     """
+#
+#     @classmethod
+#     def handle_token(cls, parser, token):
+#         # TODO: Add support for optional extra forms arg
+#         pass
+#
+#     def get_form(self, context):
+#         # TODO: Return a formset instead of a form
+#         pass
+
 
 class AttachmentEditFormNode(AttachmentFormNode):
     """
@@ -225,6 +239,12 @@ class RenderAttachmentFormNode(AttachmentFormNode):
             return formstr
         else:
             return ""
+
+
+# class RenderAttachmentFormSetNode():
+#     """
+#
+#     """
 
 
 class RenderAttachmentEditFormNode(RenderAttachmentFormNode, AttachmentEditFormNode):
@@ -327,6 +347,22 @@ def render_attachment_form(parser, token):
     return RenderAttachmentFormNode.handle_token(parser, token)
 
 
+# @register.tag
+# def render_attachment_formset(parser, token):
+#     """
+#     Render the attachment formset with `n` extra forms
+#     (as returned by ``{% render_attachment_formset %}``)
+#     through the ``attachments/formset.html`` template.
+#
+#     Syntax::
+#
+#         {% render_attachment_formset 0 for object %}
+#         {% render_attachment_formset 4 for [object] %}
+#         {% render_attachment_formset 2 for [app].[model] [object_id] %}
+#     """
+#     return RenderAttachmentFormSetNode.handle_token(parser, token)
+
+
 @register.tag
 def render_attachment_editform(parser, token):
     """
@@ -352,6 +388,20 @@ def get_attachment_form(parser, token):
         {% get_attachment_form for [app].[model] [object_id] as [varname] %}
     """
     return AttachmentFormNode.handle_token(parser, token)
+
+
+# @register.tag
+# def get_attachment_formset(parser, token):
+#     """
+#     Render a formset with `n` for object to upload new attachments.
+#
+#     Syntax::
+#
+#         {% get_attachment_formset for object as [varname] %}
+#         {% get_attachment_formset 4 for [object] as [varname] %}
+#         {% get_attachment_formset 2 for [app].[model] [object_id] as [varname] %}
+#     """
+#     return AttachmentFormSetNode.handle_token(parser, token)
 
 
 @register.tag

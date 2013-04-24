@@ -8,7 +8,7 @@ from django.template.context import RequestContext
 from django.template.loader import select_template
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError, ImproperlyConfigured
+from django.core.exceptions import ValidationError
 from django.views.generic.edit import DeleteView, CreateView, UpdateView
 from django.views.generic.detail import DetailView, SingleObjectMixin,\
     BaseDetailView
@@ -18,23 +18,7 @@ from braces.views import LoginRequiredMixin, PermissionRequiredMixin,\
 
 from files import get_form
 from files.models import Attachment
-
-
-class NextMixin(object):
-    """
-    A mixin which returns the first valid value from
-    either "next" from POST data or success_url. If neither
-    is available, try to get the absolute url from model.
-    """
-    def get_success_url(self):
-        url = self.request.POST.get("next", None) or self.success_url
-        if not url:
-            try:
-                url = self.object.get_absolute_url()
-            except AttributeError:
-                raise ImproperlyConfigured("No URL to redirect to. Provide a next value, success_url"
-                                           " or a get_absolute_url method on the Model.")
-        return url
+from files.views.mixins import NextMixin
 
 
 class AttachmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, NextMixin, CreateView):
@@ -56,14 +40,15 @@ class AttachmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, NextMixi
                 raise AttributeError("Missing content_type or object_id field.")
             model = ContentType.objects.get_for_id(ctype_pk)
             target = model.get_object_for_this_type(pk=object_pk)
-        except AttributeError:
-            raise AttributeError("The given content-type id %d does not resolve to a model." % ctype_pk)
+        except AttributeError as e:
+            raise AttributeError("The given content-type id %d does not resolve to a model. %s" %
+                                 ctype_pk, e.args[0])
         except ContentType.DoesNotExist:
             raise ContentType.DoesNotExist("No matching content-type id and object id exists." % (ctype_pk, object_pk))
-        except (ValueError, ValidationError), e:
+        except (ValueError, ValidationError) as e:
             raise e("Attempting to get content-type %d and object %d raised %s",
                     (ctype_pk, object_pk, e.__class__.__name__))
-        except Exception, e:
+        except Exception as e:
             raise e
         return form_class(target, **kwargs)
     

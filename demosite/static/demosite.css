@@ -10,11 +10,10 @@ body {
 
 a {
   color: #123;
-  text-decoration: none;
 }
 
 a:hover {
-  text-decoration: underline;
+  color: #6495ED;
 }
 
 h1 {
@@ -37,9 +36,8 @@ p {
 .container_12,
 .container_16,
 .container_24 {
-  background-color: #fff;
-  background-repeat: repeat-y;
-  margin-bottom: 20px;
+    background: #fff repeat-y;
+    margin-bottom: 20px;
 }
 
 ul {
@@ -73,4 +71,31 @@ label {
 .page-header a {
     color: #fff;
     text-decoration: none;
+}
+
+ul.inline-menu {
+  padding: 10px 0;
+  list-style: none;
+  overflow: hidden;
+}
+
+ul.inline-menu li {
+  list-style: none;
+  display: inline;
+  padding-left: 10px;
+}
+
+.label {
+  padding: 1px 4px 2px;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  text-decoration: none;
+  line-height: 1;
+  white-space: nowrap;
+  display: inline;
+  position: relative;
+  bottom: 1px;
+  color: #fff;
+  background: #6495ED;
 }

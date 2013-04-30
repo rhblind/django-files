@@ -1,0 +1,15 @@
+{% extends "base.html"%}
+{% block title %}django-files demosite{% endblock %}
+{% block content %}
+{% load attachments %}
+<div class="grid_12 center">
+    <h1>Form example</h1>
+</div>
+<div class="grid_6">
+    <h2>Adding attachments</h2>
+
+    <p>
+        {% render_attachment_form for shape %}
+    </p>
+</div>
+{% endblock %}
